@@ -46,10 +46,13 @@ public class Player extends AbstractEntity {
     private Level level;
 
     // Animation sets
-    private BufferedImage[] walkFrames;
-    private BufferedImage[] jumpFrames;
+    private BufferedImage[] rightframes;
+    private BufferedImage[] leftframes;
     private BufferedImage[] idleFrames;
-    private BufferedImage[] shootFrames;
+    private BufferedImage[] rightShootFrames;
+    private BufferedImage[] leftShootFrames;
+    private BufferedImage[] jumpFrames;
+    private BufferedImage[] walkFrames;
     private String currentAnim;
 
     // Projectiles created by shooting
@@ -80,12 +83,13 @@ public class Player extends AbstractEntity {
             BufferedImage sheet = ext.loadSpriteSheet("SpriteSheets/RoboManFull.png");
             if (sheet != null) {
                 // RoboManFull.png is 512x522: 6 cols x 5 rows
-                int fw = 85;
-                int fh = 104;
-                walkFrames = ext.extractRow(sheet, 0, 6, fw, fh);
-                jumpFrames = ext.extractRow(sheet, 1, 6, fw, fh);
+                int fw = 40;
+                int fh = 36;
+                rightframes = ext.extractRow(sheet, 0, 6, fw, fh);
+                leftframes = ext.extractRow(sheet, 1, 6, fw, fh);
                 idleFrames = new BufferedImage[]{ ext.extractSprite(sheet, 0, 0, fw, fh) };
-                shootFrames = ext.extractRow(sheet, 3, 3, fw, fh);
+                rightShootFrames = ext.extractRow(sheet, 3, 3, fw, fh);
+                leftShootFrames = ext.extractRow(sheet, 4, 3, fw, fh);
                 animFrames = idleFrames;
             }
         } catch (Exception e) {
@@ -191,9 +195,9 @@ public class Player extends AbstractEntity {
         BufferedImage[] newFrames = idleFrames;
         String newAnim = "idle";
 
-        if (!onGround)     { newFrames = jumpFrames;  newAnim = "jump";  }
-        else if (dx != 0)  { newFrames = walkFrames;  newAnim = "walk";  }
-        else if (shootPressed) { newFrames = shootFrames; newAnim = "shoot"; }
+        if (!onGround)     { newFrames = facingRight ? rightframes : leftframes;  newAnim = "jump";  }
+        else if (dx != 0)  { newFrames = facingRight ? rightframes : leftframes;  newAnim = "walk";  }
+        else if (shootPressed) { newFrames = facingRight ? rightShootFrames : leftShootFrames; newAnim = "shoot"; }
 
         if (newFrames != null && !newAnim.equals(currentAnim)) {
             currentAnim = newAnim;

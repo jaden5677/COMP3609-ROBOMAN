@@ -23,10 +23,19 @@ public class MetalChomp extends Enemy {
     private boolean defenseMode;
     private int attackCooldown;
 
+    // Animation
+    private BufferedImage defendRight, floatRight, biteStartRight, biteEndRight;
+    private BufferedImage defendLeft, floatLeft, biteStartLeft, biteEndLeft;
+    private boolean biting;
+    private int biteTick;
+    private static final int BITE_ANIM_TICKS = 8; // ticks per bite frame
+
     public MetalChomp(int x, int y, Player player, Level level) {
         super(x, y, 84, 84, HEALTH, POINTS, player, level);
         this.defenseMode = true;
         this.attackCooldown = 0;
+        this.biting = false;
+        this.biteTick = 0;
         this.fallbackColor = new Color(0, 128, 0);
         this.animSpeed = 4;
         this.affectedByGravity = true;
@@ -36,12 +45,22 @@ public class MetalChomp extends Enemy {
     private void loadSprites() {
         try {
             SpriteSheetExtractor ext = SpriteSheetExtractor.getInstance();
-            BufferedImage sheet = ext.loadSpriteSheet("SpriteSheets/MetalChomp.png");
+            BufferedImage sheet = ext.loadSpriteSheet("Spritesheets/MetalChomp.png");
             if (sheet != null) {
-                // MetalChomp.png is 512x512: 2 cols x 3 rows (256x170)
-                int fw = 256;
-                int fh = 170;
-                animFrames = ext.extractRow(sheet, 0, 2, fw, fh);
+                int fw = 32;
+                int fh = 32;
+                // Row 0: facing right
+                defendRight   = ext.extractSprite(sheet, 0 * fw, 0, fw, fh);
+                floatRight    = ext.extractSprite(sheet, 1 * fw, 0, fw, fh);
+                biteEndRight  = ext.extractSprite(sheet, 2 * fw, 0, fw, fh);
+                biteStartRight = ext.extractSprite(sheet, 3 * fw, 0, fw, fh);
+                // Row 1: facing left
+                defendLeft    = ext.extractSprite(sheet, 0 * fw, fh, fw, fh);
+                floatLeft     = ext.extractSprite(sheet, 1 * fw, fh, fw, fh);
+                biteEndLeft   = ext.extractSprite(sheet, 2 * fw, fh, fw, fh);
+                biteStartLeft = ext.extractSprite(sheet, 3 * fw, fh, fw, fh);
+                // Default: defend right
+                animFrames = new BufferedImage[]{ defendRight };
             }
         } catch (Exception e) {
             System.out.println("Could not load MetalChomp sprites: " + e.getMessage());
@@ -74,15 +93,38 @@ public class MetalChomp extends Enemy {
 
         if (attackCooldown > 0) attackCooldown--;
 
+        // Handle bite animation
+        if (biting) {
+            biteTick++;
+            if (biteTick < BITE_ANIM_TICKS) {
+                // First frame: bite start
+                animFrames = new BufferedImage[]{ facingRight ? biteStartRight : biteStartLeft };
+            } else if (biteTick < BITE_ANIM_TICKS * 2) {
+                // Second frame: bite end
+                animFrames = new BufferedImage[]{ facingRight ? biteEndRight : biteEndLeft };
+            } else {
+                // Bite over — revert to defend
+                biting = false;
+                biteTick = 0;
+                animFrames = new BufferedImage[]{ facingRight ? defendRight : defendLeft };
+            }
+            return;
+        }
+
         if (dist <= ATTACK_RANGE) {
             // Short-range bite
             defenseMode = false;
             if (attackCooldown <= 0) {
                 player.takeDamage(ATTACK_DAMAGE);
                 attackCooldown = ATTACK_COOLDOWN_TICKS;
+                biting = true;
+                biteTick = 0;
+                animFrames = new BufferedImage[]{ facingRight ? biteStartRight : biteStartLeft };
+            } else {
+                animFrames = new BufferedImage[]{ facingRight ? defendRight : defendLeft };
             }
         } else if (dist <= DETECT_RANGE) {
-            // Chase on x-axis only
+            // Chase on x-axis only — show float sprite
             defenseMode = true;
             int dir = player.getX() > x ? 1 : -1;
             int newX = x + dir * CHASE_SPEED;
@@ -95,8 +137,11 @@ public class MetalChomp extends Enemy {
             if (floorAhead && !wallAhead) {
                 x = newX;
             }
+            animFrames = new BufferedImage[]{ facingRight ? floatRight : floatLeft };
         } else {
+            // Idle — defend
             defenseMode = true;
+            animFrames = new BufferedImage[]{ facingRight ? defendRight : defendLeft };
         }
 
         animate();

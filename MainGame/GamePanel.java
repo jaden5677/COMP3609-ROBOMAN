@@ -49,7 +49,7 @@ public class GamePanel extends JPanel
 		isPaused = false;
 		soundManager = SoundManager.getInstance();
 
-		backgroundImage = ImageManager.loadImage("images/Background.jpg");
+		backgroundImage = ImageManager.loadImage("Background/Grassland/GrassLand_Background_1.png");
 		image = new BufferedImage(SCREEN_WIDTH, SCREEN_HEIGHT, BufferedImage.TYPE_INT_RGB);
 
 		setFocusable(true);

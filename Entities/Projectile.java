@@ -2,6 +2,7 @@ package Entities;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
 import MainGame.Level;
 
 public class Projectile extends AbstractEntity {
@@ -17,6 +18,7 @@ public class Projectile extends AbstractEntity {
     private int projectileDamage;
     private int lifetime;
     private static final int MAX_LIFETIME = 100;
+    private BufferedImage sprite;
 
     public Projectile(int x, int y, int dx, int dy, Type type, int damage) {
         super(x, y, 24, 24);
@@ -25,6 +27,11 @@ public class Projectile extends AbstractEntity {
         this.type = type;
         this.projectileDamage = damage;
         this.lifetime = MAX_LIFETIME;
+    }
+
+    public Projectile(int x, int y, int dx, int dy, Type type, int damage, BufferedImage sprite) {
+        this(x, y, dx, dy, type, damage);
+        this.sprite = sprite;
     }
 
     @Override
@@ -40,6 +47,10 @@ public class Projectile extends AbstractEntity {
     @Override
     public void draw(Graphics2D g2) {
         if (!isVisible) return;
+        if (sprite != null) {
+            g2.drawImage(sprite, x, y, width, height, null);
+            return;
+        }
         Color color;
         switch (type) {
             case PLAYER_LIGHT:   color = Color.YELLOW; break;
