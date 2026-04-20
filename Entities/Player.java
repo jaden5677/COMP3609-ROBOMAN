@@ -261,6 +261,10 @@ public class Player extends AbstractEntity {
         stunned = false;
         onGround = false;
     }
+    public void heal(int amount) {
+        health += amount;
+        if (health > maxHealth) health = maxHealth;
+    }
 
     // --- Input setters ---
     public void setMoveLeft(boolean b)    { moveLeft = b; }
