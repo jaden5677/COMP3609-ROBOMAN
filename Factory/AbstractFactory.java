@@ -1,24 +1,24 @@
 package Factory;
+
 import Entities.EntityInterface;
-import Entities.AbstractItem;
 
-public abstract class AbstractFactory implements FactoryInterface {
+/**
+ * Optional convenience base for factories. Subclasses only have to
+ * override the methods relevant to their domain.
+ */
+public abstract class AbstractFactory<T extends EntityInterface, K>
+        implements FactoryInterface<T, K> {
+
     @Override
-    public EntityInterface createItem(AbstractItem.ItemType itemType, int x, int y) {
-        // Implementation to create specific items based on itemType
-        return null; // Placeholder
+    public abstract T create(K kind, int x, int y);
+
+    @Override
+    public T createRandom(int x, int y) {
+        throw new UnsupportedOperationException("createRandom not implemented");
     }
 
     @Override
-    public EntityInterface createRandomItem(int x, int y) {
-        // Implementation to create a random item
-        return null; // Placeholder
+    public T[] createAll(int x, int y) {
+        throw new UnsupportedOperationException("createAll not implemented");
     }
-
-    @Override
-    public EntityInterface[] createAllItems(int x, int y) {
-        // Implementation to create all items
-        return new EntityInterface[0]; // Placeholder
-    }
-    
 }

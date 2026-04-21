@@ -5,6 +5,12 @@ import java.awt.Graphics2D;
 import java.util.ArrayList;
 import java.util.List;
 import Entities.*;
+import Entities.Enemies.Compters;
+import Entities.Enemies.Enemy;
+import Entities.Enemies.LanceGuard;
+import Entities.Enemies.MetalChomp;
+import Entities.Enemies.Thundorb;
+import Entities.Player.Player;
 
 public class Level {
 

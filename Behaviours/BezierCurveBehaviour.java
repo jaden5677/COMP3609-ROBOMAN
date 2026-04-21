@@ -2,7 +2,8 @@ package Behaviours;
 
 import java.awt.Point;
 import javax.swing.JPanel;
-import Entities.AbstractEntity;
+
+import Entities.Enemies.AbstractEnemy;
 
 public class BezierCurveBehaviour implements Behaviour {
 
@@ -15,7 +16,7 @@ public class BezierCurveBehaviour implements Behaviour {
 
    	private JPanel panel;
 
-	private AbstractEntity gameEntity;
+	private AbstractEnemy gameEntity;
 
 	private boolean active;		// to activate or deactivate behaviour
 
@@ -30,7 +31,7 @@ public class BezierCurveBehaviour implements Behaviour {
 	private int saveX;		// x-coordinate of game entity before behaviour starts
 	private int saveY;		// y-coordinate of game entity before behaviour starts
 
-	public BezierCurveBehaviour (JPanel panel, AbstractEntity gameEntity, 
+	public BezierCurveBehaviour (JPanel panel, AbstractEnemy gameEntity, 
 				     Point p0, Point p1, Point p2) {
 
 		this.panel = panel;

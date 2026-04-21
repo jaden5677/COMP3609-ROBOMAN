@@ -1,7 +1,8 @@
 package Behaviours;
 
 import javax.swing.JPanel;
-import Entities.AbstractEntity;
+
+import Entities.Enemies.AbstractEnemy;
 
 public class EllipseBehaviour implements Behaviour {
 
@@ -13,7 +14,7 @@ public class EllipseBehaviour implements Behaviour {
 
    	private JPanel panel;
 
-	private AbstractEntity entity;
+	private AbstractEnemy entity;
 
 	private boolean active;		// to activate or deactivate behaviour
 
@@ -24,7 +25,7 @@ public class EllipseBehaviour implements Behaviour {
 	private int saveX;		// x-coordinate of game entity before behaviour starts
 	private int saveY;		// y-coordinate of game entity before behaviour starts
 
-	public EllipseBehaviour (JPanel panel, AbstractEntity entity, int a, int b) {
+	public EllipseBehaviour (JPanel panel, AbstractEnemy entity, int a, int b) {
 
 		this.panel = panel;
 		this.entity = entity;
