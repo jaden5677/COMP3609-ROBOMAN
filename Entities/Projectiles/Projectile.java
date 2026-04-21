@@ -23,7 +23,7 @@ public class Projectile extends AbstractEntity {
     private BufferedImage sprite;
 
     public Projectile(int x, int y, int dx, int dy, Type type, int damage) {
-        super(x, y, 24, 24);
+        super(x, y, 48, 48);
         this.dx = dx;
         this.dy = dy;
         this.type = type;

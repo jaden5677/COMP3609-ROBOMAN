@@ -14,7 +14,7 @@ public class Player extends AbstractPlayer {
 
     // Physics
     private int speed = 5;
-    private int jumpStrength = -14;
+    private int jumpStrength = -20;
     private static final int GRAVITY = 1;
     private static final int MAX_FALL_SPEED = 10;
 
@@ -22,7 +22,7 @@ public class Player extends AbstractPlayer {
 
     // Shooting
     private long lastShotTime;
-    private static final long SHOT_COOLDOWN = 300;
+    private static final long SHOT_COOLDOWN = 500;
     private int damageBonus = 0;
     private GunType gunType = GunType.NORMAL;
     private long chargeStartTime = -1;
@@ -44,12 +44,30 @@ public class Player extends AbstractPlayer {
     // Level reference for collision
     private Level level;
 
-    // Animation sets
-    private BufferedImage[] rightframes;
-    private BufferedImage[] leftframes;
-    private BufferedImage[] idleFrames;
-    private BufferedImage[] rightShootFrames;
-    private BufferedImage[] leftShootFrames;
+    // Animation sets (all extracted from RoboManFull.png — 6 cols x 6 rows of 40x36)
+    // Row 0: facing right        — col 0 idle, cols 1-3 run, cols 4-5 jump/fall
+    // Row 1: facing left         — col 3 idle, cols 2-0 run, cols 4-5 jump/fall
+    // Row 2: facing left shoot   — col 3 stationary shoot, cols 2-0 run-shoot
+    // Row 3: facing right shoot  — col 3 stationary shoot, cols 0-2 run-shoot
+    // Row 4: bombs               — cols 0-1 throw right, cols 2-3 throw left, cols 4-5 bomb left/right
+    // Row 5: projectiles         — col 0 normal bullet, cols 1 & 2 triple-shot bullets
+    private BufferedImage[] idleRightFrames;
+    private BufferedImage[] idleLeftFrames;
+    private BufferedImage[] runRightFrames;
+    private BufferedImage[] runLeftFrames;
+    private BufferedImage[] jumpRightFrames;
+    private BufferedImage[] jumpLeftFrames;
+    private BufferedImage[] shootIdleRightFrames;
+    private BufferedImage[] shootIdleLeftFrames;
+    private BufferedImage[] shootRunRightFrames;
+    private BufferedImage[] shootRunLeftFrames;
+    private BufferedImage[] throwRightFrames;
+    private BufferedImage[] throwLeftFrames;
+    private BufferedImage  bombRightSprite;
+    private BufferedImage  bombLeftSprite;
+    private BufferedImage  bulletSprite;
+    private BufferedImage  tripleBulletUpSprite;
+    private BufferedImage  tripleBulletDownSprite;
     private String currentAnim;
 
     // Projectiles created by shooting
@@ -77,18 +95,68 @@ public class Player extends AbstractPlayer {
     private void loadSprites() {
         try {
             SpriteSheetExtractor ext = SpriteSheetExtractor.getInstance();
-            BufferedImage sheet = ext.loadSpriteSheet("SpriteSheets/RoboManFull.png");
-            if (sheet != null) {
-                // RoboManFull.png is 512x522: 6 cols x 5 rows
-                int fw = 40;
-                int fh = 36;
-                rightframes = ext.extractRow(sheet, 0, 6, fw, fh);
-                leftframes = ext.extractRow(sheet, 1, 6, fw, fh);
-                idleFrames = new BufferedImage[]{ ext.extractSprite(sheet, 0, 0, fw, fh) };
-                rightShootFrames = ext.extractRow(sheet, 3, 3, fw, fh);
-                leftShootFrames = ext.extractRow(sheet, 4, 3, fw, fh);
-                animFrames = idleFrames;
-            }
+            BufferedImage sheet = ext.loadSpriteSheet("Spritesheets/RoboManFull.png");
+            if (sheet == null) return;
+
+            final int fw = 40;
+            final int fh = 36;
+
+            // ---- Row 0: facing right (idle / run / jump) ----
+            BufferedImage row0c0 = ext.extractSprite(sheet, 0 * fw, 0 * fh, fw, fh);
+            BufferedImage row0c1 = ext.extractSprite(sheet, 1 * fw, 0 * fh, fw, fh);
+            BufferedImage row0c2 = ext.extractSprite(sheet, 2 * fw, 0 * fh, fw, fh);
+            BufferedImage row0c3 = ext.extractSprite(sheet, 3 * fw, 0 * fh, fw, fh);
+            BufferedImage row0c4 = ext.extractSprite(sheet, 4 * fw, 0 * fh, fw, fh);
+            BufferedImage row0c5 = ext.extractSprite(sheet, 5 * fw, 0 * fh, fw, fh);
+            idleRightFrames = new BufferedImage[]{ row0c0 };
+            runRightFrames  = new BufferedImage[]{ row0c1, row0c2, row0c3 };
+            jumpRightFrames = new BufferedImage[]{ row0c4, row0c5 };
+
+            // ---- Row 1: facing left (idle col 3, run cols 2->0, jump cols 4-5) ----
+            BufferedImage row1c0 = ext.extractSprite(sheet, 0 * fw, 1 * fh, fw, fh);
+            BufferedImage row1c1 = ext.extractSprite(sheet, 1 * fw, 1 * fh, fw, fh);
+            BufferedImage row1c2 = ext.extractSprite(sheet, 2 * fw, 1 * fh, fw, fh);
+            BufferedImage row1c3 = ext.extractSprite(sheet, 3 * fw, 1 * fh, fw, fh);
+            BufferedImage row1c4 = ext.extractSprite(sheet, 4 * fw, 1 * fh, fw, fh);
+            BufferedImage row1c5 = ext.extractSprite(sheet, 5 * fw, 1 * fh, fw, fh);
+            idleLeftFrames = new BufferedImage[]{ row1c3 };
+            runLeftFrames  = new BufferedImage[]{ row1c2, row1c1, row1c0 };
+            jumpLeftFrames = new BufferedImage[]{ row1c4, row1c5 };
+
+            // ---- Row 2: facing left + shooting (stationary col 3, running cols 2->0) ----
+            BufferedImage row2c0 = ext.extractSprite(sheet, 0 * fw, 2 * fh, fw, fh);
+            BufferedImage row2c1 = ext.extractSprite(sheet, 1 * fw, 2 * fh, fw, fh);
+            BufferedImage row2c2 = ext.extractSprite(sheet, 2 * fw, 2 * fh, fw, fh);
+            BufferedImage row2c3 = ext.extractSprite(sheet, 3 * fw, 2 * fh, fw, fh);
+            shootIdleLeftFrames = new BufferedImage[]{ row2c3 };
+            shootRunLeftFrames  = new BufferedImage[]{ row2c2, row2c1, row2c0 };
+
+            // ---- Row 3: facing right + shooting (running cols 0-2, stationary col 3) ----
+            BufferedImage row3c0 = ext.extractSprite(sheet, 0 * fw, 3 * fh, fw, fh);
+            BufferedImage row3c1 = ext.extractSprite(sheet, 1 * fw, 3 * fh, fw, fh);
+            BufferedImage row3c2 = ext.extractSprite(sheet, 2 * fw, 3 * fh, fw, fh);
+            BufferedImage row3c3 = ext.extractSprite(sheet, 3 * fw, 3 * fh, fw, fh);
+            shootIdleRightFrames = new BufferedImage[]{ row3c3 };
+            shootRunRightFrames  = new BufferedImage[]{ row3c0, row3c1, row3c2 };
+
+            // ---- Row 4: bombs ----
+            BufferedImage row4c0 = ext.extractSprite(sheet, 0 * fw, 4 * fh, fw, fh);
+            BufferedImage row4c1 = ext.extractSprite(sheet, 1 * fw, 4 * fh, fw, fh);
+            BufferedImage row4c2 = ext.extractSprite(sheet, 2 * fw, 4 * fh, fw, fh);
+            BufferedImage row4c3 = ext.extractSprite(sheet, 3 * fw, 4 * fh, fw, fh);
+            BufferedImage row4c4 = ext.extractSprite(sheet, 4 * fw, 4 * fh, fw, fh);
+            BufferedImage row4c5 = ext.extractSprite(sheet, 5 * fw, 4 * fh, fw, fh);
+            throwRightFrames = new BufferedImage[]{ row4c0, row4c1 };
+            throwLeftFrames  = new BufferedImage[]{ row4c2, row4c3 };
+            bombLeftSprite   = row4c4;
+            bombRightSprite  = row4c5;
+
+            // ---- Row 5: projectile sprites ----
+            bulletSprite           = ext.extractSprite(sheet, 0 * fw, 5 * fh, fw, fh);
+            tripleBulletUpSprite   = ext.extractSprite(sheet, 1 * fw, 5 * fh, fw, fh);
+            tripleBulletDownSprite = ext.extractSprite(sheet, 2 * fw, 5 * fh, fw, fh);
+
+            animFrames = idleRightFrames;
         } catch (Exception e) {
             System.out.println("Could not load player sprites: " + e.getMessage());
         }
@@ -187,38 +255,68 @@ public class Player extends AbstractPlayer {
 
         switch (gunType) {
             case TRIPLE_SHOT:
-                projectiles.add(new Projectile(projX, projY,         projDx,  0, Projectile.Type.PLAYER_LIGHT, dmg));
-                projectiles.add(new Projectile(projX, projY - 14,    projDx, -2, Projectile.Type.PLAYER_LIGHT, dmg));
-                projectiles.add(new Projectile(projX, projY + 14,    projDx,  2, Projectile.Type.PLAYER_LIGHT, dmg));
+                projectiles.add(new Projectile(projX, projY,      projDx,  0,
+                    Projectile.Type.PLAYER_LIGHT, dmg, bulletSprite));
+                projectiles.add(new Projectile(projX, projY - 14, projDx, -2,
+                    Projectile.Type.PLAYER_LIGHT, dmg, tripleBulletUpSprite));
+                projectiles.add(new Projectile(projX, projY + 14, projDx,  2,
+                    Projectile.Type.PLAYER_LIGHT, dmg, tripleBulletDownSprite));
                 break;
             case CHARGE_SHOT:
                 // Hold-to-charge: longer hold => heavier shot.
                 long held = chargeStartTime > 0 ? now - chargeStartTime : 0;
                 if (held >= 600) {
                     projectiles.add(new Projectile(projX, projY, projDx * 2, 0,
-                        Projectile.Type.PLAYER_HEAVY, dmg * 3));
+                        Projectile.Type.PLAYER_HEAVY, dmg * 3, bulletSprite));
                 } else {
                     projectiles.add(new Projectile(projX, projY, projDx, 0,
-                        Projectile.Type.PLAYER_LIGHT, dmg));
+                        Projectile.Type.PLAYER_LIGHT, dmg, bulletSprite));
                 }
                 chargeStartTime = -1;
                 break;
             case NORMAL:
             default:
                 projectiles.add(new Projectile(projX, projY, projDx, 0,
-                    Projectile.Type.PLAYER_LIGHT, dmg));
+                    Projectile.Type.PLAYER_LIGHT, dmg, bulletSprite));
                 break;
         }
         lastShotTime = now;
     }
 
     private void updateAnimation() {
-        BufferedImage[] newFrames = idleFrames;
-        String newAnim = "idle";
+        BufferedImage[] newFrames;
+        String newAnim;
 
-        if (!onGround)     { newFrames = facingRight ? rightframes : leftframes;  newAnim = "jump";  }
-        else if (dx != 0)  { newFrames = facingRight ? rightframes : leftframes;  newAnim = "walk";  }
-        else if (shootPressed) { newFrames = facingRight ? rightShootFrames : leftShootFrames; newAnim = "shoot"; }
+        boolean shooting = shootPressed;
+        boolean moving   = dx != 0;
+
+        if (!onGround) {
+            // Jumping / falling — use jump frames; if also shooting, fall back to
+            // the shoot-run frames so the gun is visible mid-air.
+            if (shooting) {
+                newFrames = facingRight ? shootRunRightFrames : shootRunLeftFrames;
+                newAnim   = facingRight ? "shoot-jump-right"  : "shoot-jump-left";
+            } else {
+                newFrames = facingRight ? jumpRightFrames : jumpLeftFrames;
+                newAnim   = facingRight ? "jump-right"   : "jump-left";
+            }
+        } else if (moving) {
+            if (shooting) {
+                newFrames = facingRight ? shootRunRightFrames : shootRunLeftFrames;
+                newAnim   = facingRight ? "shoot-run-right"   : "shoot-run-left";
+            } else {
+                newFrames = facingRight ? runRightFrames : runLeftFrames;
+                newAnim   = facingRight ? "run-right"   : "run-left";
+            }
+        } else {
+            if (shooting) {
+                newFrames = facingRight ? shootIdleRightFrames : shootIdleLeftFrames;
+                newAnim   = facingRight ? "shoot-idle-right"   : "shoot-idle-left";
+            } else {
+                newFrames = facingRight ? idleRightFrames : idleLeftFrames;
+                newAnim   = facingRight ? "idle-right"   : "idle-left";
+            }
+        }
 
         if (newFrames != null && !newAnim.equals(currentAnim)) {
             currentAnim = newAnim;
@@ -233,11 +331,9 @@ public class Player extends AbstractPlayer {
         if (!isVisible) return;
         BufferedImage frame = getCurrentFrame();
         if (frame != null) {
-            if (facingRight) {
-                g2.drawImage(frame, x - 6, y - 3, width + 12, height + 6, null);
-            } else {
-                g2.drawImage(frame, x + width + 6, y - 3, -(width + 12), height + 6, null);
-            }
+            // Sprite sheet already contains separate left/right frames, so just
+            // draw the current frame as-is (no mirroring).
+            g2.drawImage(frame, x - 6, y - 3, width + 12, height + 6, null);
         } else {
             g2.setColor(stunned ? Color.YELLOW : Color.RED);
             g2.fillRect(x, y, width, height);

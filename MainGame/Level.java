@@ -2,6 +2,7 @@ package MainGame;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 import Entities.*;
@@ -11,10 +12,16 @@ import Entities.Enemies.LanceGuard;
 import Entities.Enemies.MetalChomp;
 import Entities.Enemies.Thundorb;
 import Entities.Player.Player;
+import ImageManager.SpriteSheetExtractor;
 
 public class Level {
 
     public static final int TILE_SIZE = 96;
+
+    /** Source tile size in the Grassland tileset (pixels). */
+    private static final int SRC_TILE = 16;
+    /** Which tile from row 0 to use as the default flat top. */
+    private static final int TOP_TILE_INDEX = 1;
 
     private char[][] tiles;
     private int mapWidth;   // in tiles
@@ -22,6 +29,9 @@ public class Level {
 
     private int playerSpawnX;
     private int playerSpawnY;
+
+    /** First-row tiles from Grassland_Terrain_47Tiles.png (12 tiles, used as the top layer of floors). */
+    private BufferedImage[] floorTopTiles;
 
     // Spawn descriptors collected during map load
     private static class SpawnPoint {
@@ -33,6 +43,20 @@ public class Level {
 
     public Level() {
         enemySpawns = new ArrayList<>();
+        loadTileset();
+    }
+
+    /** Loads the Grassland 47-tile tileset and slices its first row of 16x16 tiles. */
+    private void loadTileset() {
+        try {
+            SpriteSheetExtractor ext = SpriteSheetExtractor.getInstance();
+            BufferedImage sheet = ext.loadSpriteSheet("TileSets/Plains/Grassland_Terrain_47Tiles.png");
+            if (sheet == null) return;
+            int cols = sheet.getWidth() / SRC_TILE; // 192 / 16 = 12
+            floorTopTiles = ext.extractRow(sheet, 0, cols, SRC_TILE, SRC_TILE);
+        } catch (Exception e) {
+            System.out.println("Could not load grassland tileset: " + e.getMessage());
+        }
     }
 
     // -----------------------------------------------------------------------
@@ -157,10 +181,18 @@ public class Level {
                 int px = c * TILE_SIZE;
                 int py = r * TILE_SIZE;
                 if (t == 'F' || t == 'W') {
-                    g2.setColor(new Color(100, 100, 100));
-                    g2.fillRect(px, py, TILE_SIZE, TILE_SIZE);
-                    g2.setColor(new Color(80, 80, 80));
-                    g2.drawRect(px, py, TILE_SIZE, TILE_SIZE);
+                    boolean topExposed = (r == 0) || tiles[r - 1][c] != 'F' && tiles[r - 1][c] != 'W';
+                    if (topExposed && floorTopTiles != null && floorTopTiles.length > 0) {
+                        // Draw the chosen top-layer tile from row 0 of the tileset, scaled up.
+                        BufferedImage top = floorTopTiles[TOP_TILE_INDEX % floorTopTiles.length];
+                        g2.drawImage(top, px, py, TILE_SIZE, TILE_SIZE, null);
+                    } else {
+                        // Buried floor / wall body — plain fill until body tiles are wired in.
+                        g2.setColor(new Color(100, 100, 100));
+                        g2.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+                        g2.setColor(new Color(80, 80, 80));
+                        g2.drawRect(px, py, TILE_SIZE, TILE_SIZE);
+                    }
                 } else if (t == 'E') {
                     g2.setColor(new Color(200, 50, 50, 180));
                     g2.fillRect(px, py, TILE_SIZE, TILE_SIZE);
