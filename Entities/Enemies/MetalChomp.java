@@ -1,7 +1,10 @@
-package Entities;
+package Entities.Enemies;
 
 import java.awt.Color;
 import java.awt.image.BufferedImage;
+
+import Entities.Player.Player;
+import Entities.Projectiles.Projectile;
 import ImageManager.SpriteSheetExtractor;
 import MainGame.Level;
 
@@ -31,7 +34,7 @@ public class MetalChomp extends Enemy {
     private static final int BITE_ANIM_TICKS = 8; // ticks per bite frame
 
     public MetalChomp(int x, int y, Player player, Level level) {
-        super(x, y, 84, 84, HEALTH, POINTS, player, level);
+        super(x, y, 126, 126, HEALTH, POINTS, player, level);
         this.defenseMode = true;
         this.attackCooldown = 0;
         this.biting = false;
@@ -72,11 +75,12 @@ public class MetalChomp extends Enemy {
         if (!alive) return;
         // Immune to light attacks
         if (attackType == Projectile.Type.PLAYER_LIGHT) {
+            super.takeDamage(dmg/2, attackType);
             return;
         }
         // Heavy attacks do half damage while in defense mode
         if (attackType == Projectile.Type.PLAYER_HEAVY && defenseMode) {
-            super.takeDamage(dmg / 2, attackType);
+            super.takeDamage(dmg, attackType);
             return;
         }
         super.takeDamage(dmg, attackType);

@@ -3,7 +3,8 @@ package MainGame;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
-import Entities.Player;
+
+import Entities.Player.Player;
 
 public class HealthBar {
 

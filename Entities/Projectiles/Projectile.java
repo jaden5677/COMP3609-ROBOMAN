@@ -1,8 +1,14 @@
-package Entities;
+package Entities.Projectiles;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
+import java.util.IdentityHashMap;
+import java.util.Map;
+
+import Entities.AbstractEntity;
 import MainGame.Level;
 
 public class Projectile extends AbstractEntity {
@@ -11,7 +17,8 @@ public class Projectile extends AbstractEntity {
         PLAYER_LIGHT,
         PLAYER_HEAVY,
         ENEMY_NORMAL,
-        ENEMY_ELECTRIC
+        ENEMY_ELECTRIC,
+        ENEMY_SHOCKWAVE
     }
 
     private Type type;
@@ -19,9 +26,10 @@ public class Projectile extends AbstractEntity {
     private int lifetime;
     private static final int MAX_LIFETIME = 100;
     private BufferedImage sprite;
+    private final Map<BufferedImage, Rectangle> hitboxCache = new IdentityHashMap<>();
 
     public Projectile(int x, int y, int dx, int dy, Type type, int damage) {
-        super(x, y, 24, 24);
+        super(x, y, 48, 48);
         this.dx = dx;
         this.dy = dy;
         this.type = type;
@@ -45,8 +53,7 @@ public class Projectile extends AbstractEntity {
     }
 
     @Override
-    public void draw(Graphics2D g2) {
-        if (!isVisible) return;
+    protected void drawSelf(Graphics2D g2) {
         if (sprite != null) {
             g2.drawImage(sprite, x, y, width, height, null);
             return;
@@ -73,4 +80,28 @@ public class Projectile extends AbstractEntity {
 
     public Type getType() { return type; }
     public int getProjectileDamage() { return projectileDamage; }
+
+    /**
+     * Per-frame hitbox: when a sprite is supplied, use its tight opaque-pixel
+     * bounds mapped onto the on-screen draw rect (`x, y, width, height`).
+     * For the placeholder oval/no-sprite path, fall back to the full rect.
+     */
+    @Override
+    public Rectangle2D.Double getBoundingRectangle() {
+        if (sprite == null) return super.getBoundingRectangle();
+        Rectangle b = hitboxCache.get(sprite);
+        if (b == null) {
+            b = opaqueBounds(sprite);
+            hitboxCache.put(sprite, b);
+        }
+        int fw = sprite.getWidth();
+        int fh = sprite.getHeight();
+        double sx = (double) width  / fw;
+        double sy = (double) height / fh;
+        return new Rectangle2D.Double(
+            x + b.x * sx,
+            y + b.y * sy,
+            b.width  * sx,
+            b.height * sy);
+    }
 }

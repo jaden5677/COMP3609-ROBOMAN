@@ -14,6 +14,17 @@ import java.util.List;
 import ImageManager.ImageManager;
 import SoundManager.SoundManager;
 import Entities.*;
+import Entities.Enemies.Enemy;
+import Entities.Items.AbstractItem;
+import Entities.Items.DamageUp;
+import Entities.Items.GunType;
+import Entities.Items.HealthPacks;
+import Entities.Items.HealthPacks.HealthPackType;
+import Entities.Items.ItemInterface;
+import Entities.Items.MovementUp;
+import Entities.Player.Player;
+import Entities.Projectiles.Projectile;
+import Factory.ItemFactory;
 
 /**
    A component that displays all the game entities.
@@ -33,6 +44,8 @@ public class GamePanel extends JPanel
 	private HealthBar healthBar;
 	private List<Enemy> enemies;
 	private List<Projectile> projectiles;
+	private List<ItemInterface> items;
+	private ItemFactory itemFactory;
 
 	private boolean isRunning;
 	private boolean isPaused;
@@ -70,6 +83,39 @@ public class GamePanel extends JPanel
 
 		player = new Player(level.getPlayerSpawnX(), level.getPlayerSpawnY(), level);
 		enemies = level.createEnemies(player);
+
+		itemFactory = new ItemFactory();
+		items = new ArrayList<>();
+		spawnStarterItems();
+	}
+
+	/**
+	 * Drops one of every item type in a row just to the right of the player
+	 * spawn so each pickup can be tested.
+	 */
+	private void spawnStarterItems() {
+		int spawnX = level.getPlayerSpawnX();
+		int spawnY = level.getPlayerSpawnY();
+		// Sit on the floor tile directly under the player spawn (item is 32 tall).
+		int floorY = spawnY + Level.TILE_SIZE - 32;
+		int stepX  = 56;
+		int baseX  = spawnX + Level.TILE_SIZE;
+
+		// Health packs (small / medium / large)
+		items.add(itemFactory.createHealthPack(baseX + 0 * stepX, floorY, HealthPackType.SMALL));
+		items.add(itemFactory.createHealthPack(baseX + 1 * stepX, floorY, HealthPackType.MEDIUM));
+		items.add(itemFactory.createHealthPack(baseX + 2 * stepX, floorY, HealthPackType.LARGE));
+
+		// Damage up (medium tier is fine for a quick test)
+		items.add(itemFactory.createDamageUp(baseX + 3 * stepX, floorY, DamageUp.Tier.MEDIUM));
+
+		// Movement boosts
+		items.add(itemFactory.createMovementUp(baseX + 4 * stepX, floorY, MovementUp.BoostType.JUMP,  4));
+		items.add(itemFactory.createMovementUp(baseX + 5 * stepX, floorY, MovementUp.BoostType.SPEED, 2));
+
+		// Gun type swaps
+		items.add(itemFactory.createGunType(baseX + 6 * stepX, floorY, GunType.Variant.TRIPLE_SHOT));
+		items.add(itemFactory.createGunType(baseX + 7 * stepX, floorY, GunType.Variant.CHARGE_SHOT));
 	}
 
 
@@ -103,6 +149,21 @@ public class GamePanel extends JPanel
 		// Collect player projectiles
 		projectiles.addAll(player.getProjectiles());
 		player.getProjectiles().clear();
+
+		// --- Items: update animations, then check pickup ---
+		Iterator<ItemInterface> itemIt = items.iterator();
+		while (itemIt.hasNext()) {
+			ItemInterface item = itemIt.next();
+			item.update();
+			if (!item.isVisible()) {
+				itemIt.remove();
+				continue;
+			}
+			if (item.getBoundingRectangle().intersects(player.getBoundingRectangle())) {
+				item.applyToPlayer(player);
+				itemIt.remove();
+			}
+		}
 
 		// --- Enemies ---
 		for (Enemy enemy : enemies) {
@@ -180,6 +241,10 @@ public class GamePanel extends JPanel
 		imageContext.translate(-camera.getX(), -camera.getY());
 
 		level.draw(imageContext);
+
+		for (ItemInterface item : items) {
+			item.draw(imageContext);
+		}
 
 		for (Enemy enemy : enemies) {
 			enemy.draw(imageContext);

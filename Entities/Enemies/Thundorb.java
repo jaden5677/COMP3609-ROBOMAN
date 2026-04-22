@@ -1,9 +1,12 @@
-package Entities;
+package Entities.Enemies;
 
 import java.awt.Color;
 import java.awt.image.BufferedImage;
+
+import Entities.Player.Player;
+import Entities.Projectiles.Projectile;
 import ImageManager.SpriteSheetExtractor;
-import ImageManager.ImageManager;
+//import ImageManager.ImageManager;
 import MainGame.Level;
 
 /**

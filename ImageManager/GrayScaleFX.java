@@ -3,7 +3,6 @@ package ImageManager;
 import java.util.Random;
 import java.awt.Graphics2D;
 import java.awt.geom.Rectangle2D;
-import javax.swing.JPanel;
 import java.awt.image.BufferedImage;
 import MainGame.GamePanel;
 

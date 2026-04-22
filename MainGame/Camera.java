@@ -1,6 +1,6 @@
 package MainGame;
 
-import Entities.Player;
+import Entities.Player.Player;
 
 public class Camera {
 
