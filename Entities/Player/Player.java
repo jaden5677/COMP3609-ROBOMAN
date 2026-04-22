@@ -2,9 +2,13 @@ package Entities.Player;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 
 import Entities.Projectiles.Projectile;
 import ImageManager.SpriteSheetExtractor;
@@ -69,6 +73,12 @@ public class Player extends AbstractPlayer {
     private BufferedImage  tripleBulletUpSprite;
     private BufferedImage  tripleBulletDownSprite;
     private String currentAnim;
+
+    // Source frame dims (used to map per-frame opaque bounds to screen coords)
+    private static final int SRC_FW = 40;
+    private static final int SRC_FH = 36;
+    // Cache of tight opaque bounds per source frame (lazy-filled).
+    private final Map<BufferedImage, Rectangle> hitboxCache = new IdentityHashMap<>();
 
     // Projectiles created by shooting
     private List<Projectile> projectiles;
@@ -227,7 +237,9 @@ public class Player extends AbstractPlayer {
             }
         } else if (dy < 0) {
             if (collidesWithLevel(x, newY)) {
-                y = (y / Level.TILE_SIZE + 1) * Level.TILE_SIZE;
+                // Snap the player's top to the bottom edge of the tile we
+                // bonked into (using newY, the position that actually collided).
+                y = (newY / Level.TILE_SIZE + 1) * Level.TILE_SIZE;
                 dy = 0;
             } else {
                 y = newY;
@@ -327,8 +339,7 @@ public class Player extends AbstractPlayer {
     }
 
     @Override
-    public void draw(Graphics2D g2) {
-        if (!isVisible) return;
+    protected void drawSelf(Graphics2D g2) {
         BufferedImage frame = getCurrentFrame();
         if (frame != null) {
             // Sprite sheet already contains separate left/right frames, so just
@@ -338,6 +349,31 @@ public class Player extends AbstractPlayer {
             g2.setColor(stunned ? Color.YELLOW : Color.RED);
             g2.fillRect(x, y, width, height);
         }
+    }
+
+    /**
+     * Per-frame hitbox: maps the tight opaque bounding box of the current
+     * sprite frame onto the on-screen draw rectangle. Falls back to the
+     * default x/y/width/height rect if no frame is available.
+     */
+    @Override
+    public Rectangle2D.Double getBoundingRectangle() {
+        BufferedImage frame = getCurrentFrame();
+        if (frame == null) return super.getBoundingRectangle();
+        Rectangle b = hitboxCache.get(frame);
+        if (b == null) {
+            b = opaqueBounds(frame);
+            hitboxCache.put(frame, b);
+        }
+        double drawW = width + 12;
+        double drawH = height + 6;
+        double sx = drawW / SRC_FW;
+        double sy = drawH / SRC_FH;
+        return new Rectangle2D.Double(
+            (x - 6) + b.x * sx,
+            (y - 3) + b.y * sy,
+            b.width  * sx,
+            b.height * sy);
     }
 
     // --- Stun ---

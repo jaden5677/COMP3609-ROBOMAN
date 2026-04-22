@@ -50,8 +50,8 @@ public abstract class Enemy extends AbstractEnemy {
     }
 
     @Override
-    public void draw(Graphics2D g2) {
-        if (!isVisible || !alive) return;
+    protected void drawSelf(Graphics2D g2) {
+        if (!alive) return;
         BufferedImage frame = getCurrentFrame();
         if (frame != null) {
             if (facingRight) {
@@ -64,6 +64,34 @@ public abstract class Enemy extends AbstractEnemy {
             g2.fillRect(x, y, width, height);
         }
     }
+
+    /**
+     * Per-frame hitbox: tight opaque-pixel bounds of the current frame mapped
+     * onto this entity's full draw rect (which {@link #drawSelf} stretches
+     * from the source frame to {@code width x height}).
+     */
+    @Override
+    public java.awt.geom.Rectangle2D.Double getBoundingRectangle() {
+        BufferedImage frame = getCurrentFrame();
+        if (frame == null) return super.getBoundingRectangle();
+        java.awt.Rectangle b = enemyHitboxCache.get(frame);
+        if (b == null) {
+            b = opaqueBounds(frame);
+            enemyHitboxCache.put(frame, b);
+        }
+        int fw = frame.getWidth();
+        int fh = frame.getHeight();
+        double sx = (double) width  / fw;
+        double sy = (double) height / fh;
+        double bx = facingRight ? b.x : (fw - b.x - b.width);
+        return new java.awt.geom.Rectangle2D.Double(
+            x + bx * sx,
+            y + b.y * sy,
+            b.width  * sx,
+            b.height * sy);
+    }
+    private final java.util.Map<BufferedImage, java.awt.Rectangle> enemyHitboxCache =
+        new java.util.IdentityHashMap<>();
 
     protected void applyGravity() {
         if (!affectedByGravity) return;

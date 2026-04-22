@@ -2,7 +2,11 @@ package Entities.Enemies;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
+import java.util.IdentityHashMap;
+import java.util.Map;
 
 import Entities.Player.Player;
 import Entities.Projectiles.Projectile;
@@ -49,6 +53,9 @@ public class LanceGuard extends Enemy {
     private BufferedImage idleLeft,    defenseLeft,    attackLeft;
     private BufferedImage idleRight,   defenseRight,   attackRight;
     private BufferedImage shockwaveRight, shockwaveLeft;
+    // Source cell dimensions and per-frame hitbox cache
+    private int srcCellW = 1, srcCellH = 1;
+    private final Map<BufferedImage, Rectangle> hitboxCache = new IdentityHashMap<>();
 
     public LanceGuard(int x, int y, Player player, Level level) {
         super(x, y, 96, 96, HEALTH, POINTS, player, level);
@@ -72,6 +79,8 @@ public class LanceGuard extends Enemy {
             // (256x256 sheet => 85x85 cells, even though the artwork is 86x86).
             int cellW = sheet.getWidth()  / 3;
             int cellH = sheet.getHeight() / 3;
+            srcCellW = cellW;
+            srcCellH = cellH;
 
             // Row 0: facing LEFT  (defense | idle | attack)
             defenseLeft = ext.extractSprite(sheet, 0 * cellW, 0 * cellH, cellW, cellH);
@@ -205,8 +214,8 @@ public class LanceGuard extends Enemy {
      * {@code facingRight}, which would double-flip our pre-oriented frames.
      */
     @Override
-    public void draw(Graphics2D g2) {
-        if (!isVisible || !alive) return;
+    protected void drawSelf(Graphics2D g2) {
+        if (!alive) return;
         BufferedImage frame = getCurrentFrame();
         if (frame != null) {
             g2.drawImage(frame, x, y, width, height, null);
@@ -214,5 +223,24 @@ public class LanceGuard extends Enemy {
             g2.setColor(fallbackColor);
             g2.fillRect(x, y, width, height);
         }
+    }
+
+    /** Per-frame tight hitbox derived from the current sprite's opaque pixels. */
+    @Override
+    public Rectangle2D.Double getBoundingRectangle() {
+        BufferedImage frame = getCurrentFrame();
+        if (frame == null || srcCellW <= 0 || srcCellH <= 0) return super.getBoundingRectangle();
+        Rectangle b = hitboxCache.get(frame);
+        if (b == null) {
+            b = opaqueBounds(frame);
+            hitboxCache.put(frame, b);
+        }
+        double sx = (double) width  / srcCellW;
+        double sy = (double) height / srcCellH;
+        return new Rectangle2D.Double(
+            x + b.x * sx,
+            y + b.y * sy,
+            b.width  * sx,
+            b.height * sy);
     }
 }

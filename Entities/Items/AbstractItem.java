@@ -43,8 +43,7 @@ public abstract class AbstractItem extends AbstractEntity implements ItemInterfa
     protected Color placeholderColor() { return Color.GREEN; }
 
     @Override
-    public void draw(Graphics2D g2) {
-        if (!isVisible) return;
+    protected void drawSelf(Graphics2D g2) {
         if (sprite != null) {
             g2.drawImage(sprite, x, y, width, height, null);
             return;

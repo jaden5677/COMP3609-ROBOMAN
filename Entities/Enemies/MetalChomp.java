@@ -34,7 +34,7 @@ public class MetalChomp extends Enemy {
     private static final int BITE_ANIM_TICKS = 8; // ticks per bite frame
 
     public MetalChomp(int x, int y, Player player, Level level) {
-        super(x, y, 84, 84, HEALTH, POINTS, player, level);
+        super(x, y, 126, 126, HEALTH, POINTS, player, level);
         this.defenseMode = true;
         this.attackCooldown = 0;
         this.biting = false;
