@@ -201,10 +201,6 @@ public class Level {
         }
     }
 
-    // -----------------------------------------------------------------------
-    //  Entity spawning
-    // -----------------------------------------------------------------------
-
     public List<Enemy> createEnemies(Player player) {
         List<Enemy> enemies = new ArrayList<>();
         for (SpawnPoint sp : enemySpawns) {

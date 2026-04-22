@@ -13,7 +13,8 @@ public class Projectile extends AbstractEntity {
         PLAYER_LIGHT,
         PLAYER_HEAVY,
         ENEMY_NORMAL,
-        ENEMY_ELECTRIC
+        ENEMY_ELECTRIC,
+        ENEMY_SHOCKWAVE
     }
 
     private Type type;
