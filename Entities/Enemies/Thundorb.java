@@ -55,13 +55,38 @@ public class Thundorb extends Enemy {
         this.shootTimer = 0;
         this.retreating = false;
         this.floatTick = 0;
-        this.baseY = y;
+        // Lift the spawn so the orb's body (plus its float wobble) never
+        // dips into a solid tile placed directly beneath it on the map.
+        this.baseY = clampAboveSolids(level, x, y);
+        this.y = baseY;
         this.fallbackColor = Color.CYAN;
         this.animSpeed = 8;
         this.affectedByGravity = false; // floats
         this.animState = AnimState.POWERED;
         this.loseChargeTimer = 0;
         loadSprites();
+    }
+
+    /**
+     * Walks downward from {@code spawnY} looking for a solid tile that
+     * intersects the entity's vertical extent (plus the float wobble).
+     * Returns {@code spawnY} if nothing is in the way, otherwise a y value
+     * that places the bottom of the orb one tile above the obstruction.
+     */
+    private int clampAboveSolids(Level level, int spawnX, int spawnY) {
+        int probeXLeft  = spawnX + 4;
+        int probeXRight = spawnX + width - 4;
+        int floatPad    = 8; // accounts for the +/-4 sin wobble
+        int bottom      = spawnY + height + floatPad;
+        int maxScan     = Level.TILE_SIZE * 4;
+        for (int dy = 0; dy < maxScan; dy += 4) {
+            int b = bottom + dy;
+            if (level.isSolid(probeXLeft, b) || level.isSolid(probeXRight, b)) {
+                int tileTop = (b / Level.TILE_SIZE) * Level.TILE_SIZE;
+                return tileTop - height - floatPad - 1;
+            }
+        }
+        return spawnY;
     }
 
     private void loadSprites() {

@@ -68,27 +68,60 @@ public class Level {
         // Legend:  F = floor / solid   W = wall   P = player spawn
         //          C = Compters   L = LanceGuard   M = MetalChomp   T = Thundorb
         //          . = empty / air
+        //          S = Stone, for the underground part of the level(solid and a type of floor but visually distinct from F)
+        // * = exit block (removed when all arena enemies are defeated)
+        //r - Random Enemy Spawn
+        // + = Arena Area (This is still empty space, however this is a signifying empty space that will identify that the player has stepped into an arena, when entering this area, the exit block will activate, closing off until all enemies in all waves in the arena block are destroyed)
+        // It should be noted that the arena will not be visually distinct from the rest of the level and as soon as
         String[] map = {
             "W......................................................................",  //  0
-            "W......................................................................",  //  1
-            "W......................................................................",  //  2
-            "W......................................................................",  //  3
-            "W......................................................................",  //  4
-            "W......................................................................",  //  5
-            "W.......................................................FFFFFFFFFFF....",  //  6
-            "W.....................................................C..C..C..........",  //  7
+            "W..P....................................................................",  //  1
+            "W.......................................L....................................................",  //  2
+            "W...........................L.......FFFFFFFFFF..........T....................................",  //  3
+            "W........................FFFFFFFF...............FFFFFFFFFFFFFF..............................",  //  4
+            "W..................................FFFFFFFFFFFF.................FFFFFFFFFF..................",  //  5
+            "W............................................................................FFFFFFFFFFF....",  //  6
+            "W.....................................................C..C..C...........FFF...",  //  7
             "W................................C..........C..................FFFFFFFF..",  //  8
             "W.......................................................FFFFFF.........",  //  9
-            "W.....................................................FFFFF............",  // 10
+            "W...................................................FFF................",  // 10
             "W...................................................T......FFFFFF......",  // 11
-            "W............................M.........FFFFFFF..FFFFFFF.FFFFFF.........",  // 12
-            "W..P...............T..M..L...FFFFFF.........................FFFFFF.....",  // 13
-            "FFFFFFFFFFFFFFFFFFFFFFFFFFF........FFFFFFFF...FFFFFFFFFF..FFFFFFFF.T..",  // 14
-            "FFFFFFFFFFFFFFFFFFF......................................................",  // 15
-            "......................................................................",  // 16
-            "......................................................................",  // 17
-            "......................................................................",  // 18
-            "......................................................................",  // 19
+            "W............................M.........FFFFFFF..FFFFFFF.FF.......T.......",  // 12
+            "W.................T..M..L...FFFFFF.........................FFFFFF.....",  // 13
+            "FFFFFFFFFFFFFFFFFFFFFFFFFFF........FFFFFFFF...FFFFFFFFFF..FF..........",  // 14
+            "GGGGGGGGGGGGGGGGGGGGGGGGGGG........GGGGGGGG...GGGGGGGGGG..GG..........",  // 15
+            "GGGGGGGGGGGGGGGGGGGGGGGGGGG........GGGGGGGG...GGGGGGGGGG..GG............",  // 16
+            "GGGGGGGGGGGGGGGGGGGGGGGGGGG........GGGGGGGG...GGGGGGGGGG..GG...........",  // 17
+            "S..................................GGGGGGGG...GGGGGGGGGG..GG...........",  // 18
+            "S..................................SSSSSSSS...SSSSSSSSSS..SS...........",  // 19
+            "S.........................................................SSSSSS.......",  //  20
+            "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS...........SSSSSSSSSSSSSSSSSSS.....",  //  21
+            "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS............SSSSSSSSSSSSSSSSSSS",  //  22                                      Arena 1 Is below here
+            "S............................................SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS",  //  23
+            "SSSSSSSSSSSSSS.............SSSSSSSSSS........SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++S",  //  24
+            "S......SSSSSSSSSSSSSSSSSSSSSSSSSSSSSS........SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++S",  //  25
+            "S............................................SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++S",  //  26
+            "S....................................SSS.....SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++S",  //  27
+            "S..........SSSSSSS...SSSSS...SSSSSS..........SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS++++++SSSSSSSS++++SSSSSSSSS++++SSSSSSSS++++SSSSSSSS++++++++++++SSSSSSSSS+++S",  //  28
+            "SSSSSSSS..........................................................................*+++++++++++++++++++++++++++++++++++++++++++++++++++++SSSSSSSS++++++++++++++S",  //  29
+            "S.................................................................................*+++++++++++++++++++++++++++++++++++++++++++SSSSSSSSS+++++++++++++++++++++++S",  // 30
+            "S........SSSSSSSS...SSSSSSSSS...SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS++++++++++++++++++++++++++++++++SSSSSSSSS++++++++++++++++++++++++++++++++++S",  // 31
+            "S............................................SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS++++++++++++SSSSSSSS++++++++++SSSSSSSSS++++++++++++++++++++++++S",  // 32
+            "SSSSSSSSS....................................SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS+++++++++++++SSSSSSSSS+++++++++++++++++++++++++++++++++++++++++++++++++++++S",  // 33
+            "S...........SSSSSSSSS...SSSSSSSSSSSSS........SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS++++++++++++++++++++++++++++++++++++++++++++++++++++++++SSSSSSSSSSSSSSS++++S",  // 34
+            "S............................................SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS++++++++++++++++++++++++++++++++++SSSSSSSS+++SSSSSSSSS+++++++++++++++++++++S",  // 35
+            "SSSSSSSSSSS..SSSSSSSS........................SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS++++++++++++++++++SSSSSSSSSSSSSS+++++++++++++++++++++++++++++++++++++++++++S",  // 36
+            "SSSSSSSSSSS..SSSSSSSS...SSSSSSSSSSSSS........SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS+++++SSSSSSSSSSS+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++S",  // 37
+            "SSSSSSSSSSS..SSSSSSSS...SSSSSSSSSSSSS........SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++S",  // 38
+            "S.......................SSSSSSSSSSSSS........SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++S",
+            "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS+++++++++++++++++SSSSSSSSSSSS++++++++++++++++++++++++++++++++++++++++++++++S",  // 39
+            "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS++++++++++++++++++++++++++++++++SSSSSSSSS++++++++++++++++++++++++++++++++++S",  // 40
+            "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++S",  // 41
+            "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS++++++++++++SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS++++++++++++++++++S",  // 42
+            "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++S",  // 43
+            "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS++++++++++++++++++++++++++++++++++++++++++++++++++SSSSSSSSS++++++S",  // 44
+            "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++S",  //  45
+            "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS",
         };
         loadMap(map);
     }

@@ -75,7 +75,17 @@ public class Projectile extends AbstractEntity {
     }
 
     public boolean collidesWithTile(Level level) {
-        return level.isSolid(x, y) || level.isSolid(x + width, y + height);
+        // Use the tight opaque-pixel hitbox, not the (often much larger)
+        // draw-cell rect. Otherwise a big bullet sprite spawned next to the
+        // player whose draw box dips into the adjacent floor would be
+        // killed on its very first tick before ever leaving the muzzle.
+        Rectangle2D.Double r = getBoundingRectangle();
+        int left   = (int) r.x;
+        int right  = (int) (r.x + r.width  - 1);
+        int top    = (int) r.y;
+        int bottom = (int) (r.y + r.height - 1);
+        return level.isSolid(left, top)    || level.isSolid(right, top) ||
+               level.isSolid(left, bottom) || level.isSolid(right, bottom);
     }
 
     public Type getType() { return type; }

@@ -260,39 +260,52 @@ public class Player extends AbstractPlayer {
         long now = System.currentTimeMillis();
         if (now - lastShotTime < SHOT_COOLDOWN) return;
 
-        int projX  = facingRight ? x + width : x - 24;
-        int projY  = y + height / 2 - 12;
+        // Bullet draw size (scales hitbox via per-frame opaque-bounds mapping
+        // already implemented on Projectile). 120 ~= 48 * 2.5.
+        final int BULLET_SIZE = 120;
+        // Anchor the bullet so its visible centre sits at the gun height
+        // (roughly the player's upper third), not the geometric centre of
+        // the player rect — otherwise the oversized 120px sprite box dips
+        // below the feet and clips into the floor.
+        int projX  = facingRight ? x + width-52 : x - BULLET_SIZE +52;
+        int projY  = y + height / 3 - BULLET_SIZE / 2 - 22;
         int projDx = facingRight ? 8 : -8;
         int dmg    = 10 + damageBonus;
 
         switch (gunType) {
             case TRIPLE_SHOT:
-                projectiles.add(new Projectile(projX, projY,      projDx,  0,
-                    Projectile.Type.PLAYER_LIGHT, dmg, bulletSprite));
-                projectiles.add(new Projectile(projX, projY - 14, projDx, -2,
-                    Projectile.Type.PLAYER_LIGHT, dmg, tripleBulletUpSprite));
-                projectiles.add(new Projectile(projX, projY + 14, projDx,  2,
-                    Projectile.Type.PLAYER_LIGHT, dmg, tripleBulletDownSprite));
+                addBullet(new Projectile(projX, projY,                projDx,  0,
+                    Projectile.Type.PLAYER_LIGHT, dmg, bulletSprite),           BULLET_SIZE);
+                addBullet(new Projectile(projX, projY - BULLET_SIZE / 3, projDx, -2,
+                    Projectile.Type.PLAYER_LIGHT, dmg, tripleBulletUpSprite),   BULLET_SIZE);
+                addBullet(new Projectile(projX, projY + BULLET_SIZE / 3, projDx,  2,
+                    Projectile.Type.PLAYER_LIGHT, dmg, tripleBulletDownSprite), BULLET_SIZE);
                 break;
             case CHARGE_SHOT:
                 // Hold-to-charge: longer hold => heavier shot.
                 long held = chargeStartTime > 0 ? now - chargeStartTime : 0;
                 if (held >= 600) {
-                    projectiles.add(new Projectile(projX, projY, projDx * 2, 0,
-                        Projectile.Type.PLAYER_HEAVY, dmg * 3, bulletSprite));
+                    addBullet(new Projectile(projX, projY, projDx * 2, 0,
+                        Projectile.Type.PLAYER_HEAVY, dmg * 3, bulletSprite), BULLET_SIZE);
                 } else {
-                    projectiles.add(new Projectile(projX, projY, projDx, 0,
-                        Projectile.Type.PLAYER_LIGHT, dmg, bulletSprite));
+                    addBullet(new Projectile(projX, projY, projDx, 0,
+                        Projectile.Type.PLAYER_LIGHT, dmg, bulletSprite), BULLET_SIZE);
                 }
                 chargeStartTime = -1;
                 break;
             case NORMAL:
             default:
-                projectiles.add(new Projectile(projX, projY, projDx, 0,
-                    Projectile.Type.PLAYER_LIGHT, dmg, bulletSprite));
+                addBullet(new Projectile(projX, projY, projDx, 0,
+                    Projectile.Type.PLAYER_LIGHT, dmg, bulletSprite), BULLET_SIZE);
                 break;
         }
         lastShotTime = now;
+    }
+
+    private void addBullet(Projectile p, int size) {
+        p.width  = size;
+        p.height = size;
+        projectiles.add(p);
     }
 
     private void updateAnimation() {
