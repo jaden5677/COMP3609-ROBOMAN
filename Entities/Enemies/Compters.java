@@ -8,18 +8,6 @@ import Entities.Projectiles.Projectile;
 import ImageManager.SpriteSheetExtractor;
 import MainGame.Level;
 
-/**
- * Compters - Hovering patrol enemy. Flies above the player and shoots
- * projectiles downward. Comes in two visual variants (STANDARD / ALT)
- * which use different colour palettes and matching projectile sprites.
- *
- * Sprite sheet layout (32x32 cells):
- *   Row 0: STANDARD compter, 2 flight frames (cols 0-1)
- *   Row 1: ALT compter,      2 flight frames (cols 0-1)
- *   Row 2: projectiles - col 0 -> ALT, col 1 -> STANDARD
- *
- * Worth 200 points.
- */
 public class Compters extends Enemy {
 
     public enum Variant { STANDARD, ALT }
@@ -28,7 +16,7 @@ public class Compters extends Enemy {
     private static final int HEALTH = 30;
     private static final int PATROL_SPEED = 2;
     private static final int SHOOT_RANGE = 250;
-    private static final int SHOOT_COOLDOWN_TICKS = 40; // 2 sec at 20fps
+    private static final int SHOOT_COOLDOWN_TICKS = 40;
     private static final int SRC_FRAME = 32;
     private static final int PROJECTILE_SIZE = 32;
     private static final int PROJECTILE_DAMAGE = 10;
@@ -53,9 +41,13 @@ public class Compters extends Enemy {
         this.patrolRightBound = x + 192;
         this.shootCooldown = 0;
         this.movingRight = true;
-        this.fallbackColor = (variant == Variant.ALT) ? Color.MAGENTA : Color.ORANGE;
+        if (variant == Variant.ALT) {
+            this.fallbackColor = Color.MAGENTA;
+        } else {
+            this.fallbackColor = Color.ORANGE;
+        }
         this.animSpeed = 6;
-        this.affectedByGravity = false; // hovers
+        this.affectedByGravity = false;
         loadSprites();
     }
 
@@ -65,14 +57,23 @@ public class Compters extends Enemy {
             BufferedImage sheet = ext.loadSpriteSheet("Spritesheets/Compters.png");
             if (sheet == null) return;
 
-            int row = (variant == Variant.ALT) ? 1 : 0;
+            int row;
+            if (variant == Variant.ALT) {
+                row = 1;
+            } else {
+                row = 0;
+            }
             BufferedImage[] flight = new BufferedImage[2];
             flight[0] = ext.extractSprite(sheet, 0 * SRC_FRAME, row * SRC_FRAME, SRC_FRAME, SRC_FRAME);
             flight[1] = ext.extractSprite(sheet, 1 * SRC_FRAME, row * SRC_FRAME, SRC_FRAME, SRC_FRAME);
             animFrames = flight;
 
-            // Row 2: col 0 = ALT projectile, col 1 = STANDARD projectile
-            int projCol = (variant == Variant.ALT) ? 0 : 1;
+            int projCol;
+            if (variant == Variant.ALT) {
+                projCol = 0;
+            } else {
+                projCol = 1;
+            }
             projectileSprite = ext.extractSprite(sheet,
                 projCol * SRC_FRAME, 2 * SRC_FRAME, SRC_FRAME, SRC_FRAME);
         } catch (Exception e) {
@@ -86,17 +87,23 @@ public class Compters extends Enemy {
     public void update() {
         if (!alive) return;
 
-        // Horizontal patrol
         if (movingRight) {
-            x += PATROL_SPEED;
-            if (x >= patrolRightBound) movingRight = false;
+            int newX = x + PATROL_SPEED;
+            if (newX >= patrolRightBound || hitsSolid(newX, true)) {
+                movingRight = false;
+            } else {
+                x = newX;
+            }
         } else {
-            x -= PATROL_SPEED;
-            if (x <= patrolLeftBound) movingRight = true;
+            int newX = x - PATROL_SPEED;
+            if (newX <= patrolLeftBound || hitsSolid(newX, false)) {
+                movingRight = true;
+            } else {
+                x = newX;
+            }
         }
         facingRight = movingRight;
 
-        // Shoot downward at player when in range
         if (shootCooldown > 0) {
             shootCooldown--;
         } else if (playerInRange(SHOOT_RANGE) && player.getY() > y) {
@@ -115,5 +122,17 @@ public class Compters extends Enemy {
         }
 
         animate();
+    }
+
+    private boolean hitsSolid(int newX, boolean movingRight) {
+        int probeX;
+        if (movingRight) {
+            probeX = newX + width - 1;
+        } else {
+            probeX = newX;
+        }
+        return level.isSolid(probeX, y + 4)
+            || level.isSolid(probeX, y + height / 2)
+            || level.isSolid(probeX, y + height - 4);
     }
 }

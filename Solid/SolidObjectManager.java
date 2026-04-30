@@ -9,31 +9,22 @@ import java.util.Random;
 public class SolidObjectManager {
 
    private SolidObject solidObjects[];
-  
+
    public SolidObjectManager () {
 
       solidObjects = new SolidObject[1];
       solidObjects[0] = new SolidObject (160, 225, 40, 75, Color.YELLOW);
 
-/*
-
-      solidObjects = new SolidObject[3];
-      solidObjects[0] = new SolidObject (240, 225, 40, 75, Color.YELLOW);
-      solidObjects[1] = new SolidObject (375, 75, 100, 25, Color.CYAN);
-      solidObjects[2] = new SolidObject (100, 325, 60, 40, Color.GREEN);
-*/
    }
 
-
    public void draw (Graphics2D g2) {
-	
+
       for (int i=0; i<solidObjects.length; i++) {
 	  SolidObject solidObject = solidObjects[i];
 	  solidObject.draw (g2);
       }
 
    }
-
 
    public SolidObject collidesWith(Rectangle2D.Double boundingRectangle) {
 
@@ -48,7 +39,6 @@ public class SolidObjectManager {
       return null;
 
    }
-
 
    public boolean onSolidObject(int x, int width) {
 

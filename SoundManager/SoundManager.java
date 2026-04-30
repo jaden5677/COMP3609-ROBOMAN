@@ -1,14 +1,13 @@
 package SoundManager;
 
-// for playing sound clips
 import javax.sound.sampled.*;
 import java.io.*;
-import java.util.HashMap;				// for storing sound clips
+import java.util.HashMap;
 
-public class SoundManager {				// a Singleton class
+public class SoundManager {
 	HashMap<String, Clip> clips;
 
-	private static SoundManager instance = null;	// keeps track of Singleton instance
+	private static SoundManager instance = null;
 
 	private float volume;
 
@@ -18,66 +17,59 @@ public class SoundManager {				// a Singleton class
 
 		clips = new HashMap<String, Clip>();
 
-		//Clip clip = loadClip("sounds/background.wav");	// played from start of the game
-		//clips.put("background", clip);
-
-		clip = loadClip("BulletFire.wav");	// played when the bat hits an alien
+		clip = loadClip("BulletFire.wav");
 		clips.put("BulletFire", clip);
 
-		clip = loadClip("BulletHit.wav");	// played when an alien is regenerated at the top of the JPanel
+		clip = loadClip("BulletHit.wav");
 		clips.put("BulletHit", clip);
 
-        clip = loadClip("GrassWalking.wav");	// played when an alien is regenerated at the top of the JPanel
+        clip = loadClip("GrassWalking.wav");
 		clips.put("GrassWalking", clip);
-        clip = loadClip("Level1Ambience.wav");	// played when an alien is regenerated at the top of the JPanel
+        clip = loadClip("Level1Ambience.wav");
 		clips.put("Level1Ambience", clip);
-        clip = loadClip("MetalWalking.wav");	// played when an alien is regenerated at the top of the JPanel
+        clip = loadClip("MetalWalking.wav");
 		clips.put("MetalWalking", clip);
-        clip = loadClip("PickUp.wav");	// played when an alien is regenerated at the top of the JPanel
+        clip = loadClip("PickUp.wav");
 		clips.put("PickUp", clip);
-        clip = loadClip("PlayerDamage.wav");	// played when an alien is regenerated at the top of the JPanel
+        clip = loadClip("PlayerDamage.wav");
 		clips.put("PlayerDamage", clip);
-        clip = loadClip("PowerUp.wav");	// played when an alien is regenerated at the top of the JPanel
+        clip = loadClip("PowerUp.wav");
 		clips.put("PowerUp", clip);
-        clip = loadClip("RobomanBombExplosion.wav");	// played when an alien is regenerated at the top of the JPanel
+        clip = loadClip("RobomanBombExplosion.wav");
 		clips.put("RobomanBombExplosion", clip);
 
 		volume = 1.0f;
 	}
 
-
-	public static SoundManager getInstance() {	// class method to retrieve instance of Singleton
+	public static SoundManager getInstance() {
 		if (instance == null)
 			instance = new SoundManager();
-		
+
 		return instance;
-	}		
+	}
 
-
-    	public Clip loadClip (String fileName) {	// gets clip from the specified file
- 		AudioInputStream audioIn;
+	public Clip loadClip (String fileName) {
+		AudioInputStream audioIn;
 		Clip clip = null;
 
 		try {
-    			File file = new File(fileName);
-    			audioIn = AudioSystem.getAudioInputStream(file.toURI().toURL()); 
-    			clip = AudioSystem.getClip();
-    			clip.open(audioIn);
+			File file = new File(fileName);
+			audioIn = AudioSystem.getAudioInputStream(file.toURI().toURL());
+			clip = AudioSystem.getClip();
+			clip.open(audioIn);
 		}
 		catch (Exception e) {
- 			System.out.println ("Error opening sound files: " + e);
+			System.out.println ("Error opening sound files: " + e);
 		}
-    		return clip;
-    	}
-
+		return clip;
+	}
 
 	public Clip getClip (String title) {
 
 		return clips.get(title);
 	}
 
-
-    	public void playClip(String title, boolean looping) {
+	public void playClip(String title, boolean looping) {
 		Clip clip = getClip(title);
 		if (clip != null) {
 			clip.setFramePosition(0);
@@ -86,14 +78,13 @@ public class SoundManager {				// a Singleton class
 			else
 				clip.start();
 		}
-    	}
+	}
 
-
-    	public void stopClip(String title) {
+	public void stopClip(String title) {
 		Clip clip = getClip(title);
 		if (clip != null) {
 			clip.stop();
 		}
-    	}
+	}
 
 }

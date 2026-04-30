@@ -8,10 +8,6 @@ import Entities.Enemies.Thundorb;
 import Entities.Player.Player;
 import MainGame.Level;
 
-/**
- * Builds enemies on demand. Needs the player + level so spawned enemies
- * have the references they need to chase / shoot / collide.
- */
 public class EnemyFactory extends AbstractFactory<Enemy, EnemyFactory.EnemyKind> {
 
     public enum EnemyKind { COMPTERS, COMPTERS_ALT, LANCE_GUARD, METAL_CHOMP, THUNDORB }
@@ -40,7 +36,6 @@ public class EnemyFactory extends AbstractFactory<Enemy, EnemyFactory.EnemyKind>
         }
     }
 
-    /** Convenience for callers that loaded a map with enemy chars (C/L/M/T). */
     public Enemy createFromChar(char c, int x, int y) {
         switch (c) {
             case 'C': return create(EnemyKind.COMPTERS,    x, y);

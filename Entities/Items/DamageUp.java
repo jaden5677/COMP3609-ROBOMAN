@@ -1,13 +1,11 @@
 package Entities.Items;
 
 import java.awt.Color;
+import java.awt.image.BufferedImage;
 
 import Entities.Player.PlayerInterface;
+import ImageManager.SpriteSheetExtractor;
 
-/**
- * Increases the player's outgoing damage. Three tiers, scaled by the
- * underlying boost amount supplied at construction.
- */
 public class DamageUp extends AbstractItem {
 
     public enum Tier {
@@ -21,9 +19,20 @@ public class DamageUp extends AbstractItem {
 
     public final Tier tier;
 
+    private static BufferedImage iconSprite;
+    private static void ensureSprite() {
+        if (iconSprite != null) return;
+        SpriteSheetExtractor ext = SpriteSheetExtractor.getInstance();
+        BufferedImage sheet = ext.loadSpriteSheet("TileSets/Gun.png");
+        if (sheet == null) return;
+        iconSprite = ext.extractSprite(sheet, 7 * 16, 0 * 16, 16, 16);
+    }
+
     public DamageUp(int x, int y, String imagePath, Tier tier) {
         super(x, y, imagePath, ItemType.DamageUp);
         this.tier = tier;
+        ensureSprite();
+        this.sprite = iconSprite;
     }
 
     @Override

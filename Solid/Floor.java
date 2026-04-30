@@ -15,8 +15,7 @@ public class Floor {
 	private int x;
 	private int y;
 
-
-	public Floor (JPanel p, int xPos, int yPos) { 
+	public Floor (JPanel p, int xPos, int yPos) {
 
 		panel = p;
 
@@ -24,33 +23,27 @@ public class Floor {
 		y = yPos;
 	}
 
-
 	public void draw (Graphics2D g2) {
-      		Rectangle2D.Double floor = new Rectangle2D.Double(x, y, WIDTH, HEIGHT);
-     		g2.setColor (Color.GREEN);
-     		g2.fill(floor);
+		Rectangle2D.Double floor = new Rectangle2D.Double(x, y, WIDTH, HEIGHT);
+		g2.setColor (Color.GREEN);
+		g2.fill(floor);
 	}
-
 
 	public Rectangle2D.Double getBoundingRectangle() {
 		return new Rectangle2D.Double (x, y, WIDTH, HEIGHT);
 	}
 
-
 	public int getX() {
 		return x;
 	}
-
 
 	public int getY() {
 		return y;
 	}
 
-
 	public int getWidth() {
 		return WIDTH;
 	}
-
 
 	public int getHeight() {
 		return HEIGHT;

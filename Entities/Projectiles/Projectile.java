@@ -75,10 +75,7 @@ public class Projectile extends AbstractEntity {
     }
 
     public boolean collidesWithTile(Level level) {
-        // Use the tight opaque-pixel hitbox, not the (often much larger)
-        // draw-cell rect. Otherwise a big bullet sprite spawned next to the
-        // player whose draw box dips into the adjacent floor would be
-        // killed on its very first tick before ever leaving the muzzle.
+
         Rectangle2D.Double r = getBoundingRectangle();
         int left   = (int) r.x;
         int right  = (int) (r.x + r.width  - 1);
@@ -91,11 +88,13 @@ public class Projectile extends AbstractEntity {
     public Type getType() { return type; }
     public int getProjectileDamage() { return projectileDamage; }
 
-    /**
-     * Per-frame hitbox: when a sprite is supplied, use its tight opaque-pixel
-     * bounds mapped onto the on-screen draw rect (`x, y, width, height`).
-     * For the placeholder oval/no-sprite path, fall back to the full rect.
-     */
+    public void reflect() {
+        this.dx = -this.dx;
+        this.dy = -this.dy;
+        this.type = Type.ENEMY_NORMAL;
+        this.lifetime = MAX_LIFETIME;
+    }
+
     @Override
     public Rectangle2D.Double getBoundingRectangle() {
         if (sprite == null) return super.getBoundingRectangle();

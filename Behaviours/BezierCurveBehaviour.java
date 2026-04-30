@@ -7,31 +7,31 @@ import Entities.Enemies.AbstractEnemy;
 
 public class BezierCurveBehaviour implements Behaviour {
 
-   	private static double START = 0;
-   	private static double END = 1.0;
-   	private static double INCR = 0.02;
+	private static double START = 0;
+	private static double END = 1.0;
+	private static double INCR = 0.02;
 
-   	private static int CENTRE_X = 150;
-   	private static int CENTRE_Y = 100;
+	private static int CENTRE_X = 150;
+	private static int CENTRE_Y = 100;
 
-   	private JPanel panel;
+	private JPanel panel;
 
 	private AbstractEnemy gameEntity;
 
-	private boolean active;		// to activate or deactivate behaviour
+	private boolean active;
 
-	private Point p0;		// first point for drawing curve;
-	private Point p1;		// second point for drawing curve;
-	private Point p2;		// third point for drawing curve;
+	private Point p0;
+	private Point p1;
+	private Point p2;
 
-	private int b;			// semi-minor axis of ellipse
-	private double t;		// loop curve for t =[0.0, 1.0]
- 	private double incr;		// increment for looping t in [0.0, 1.0]
- 
-	private int saveX;		// x-coordinate of game entity before behaviour starts
-	private int saveY;		// y-coordinate of game entity before behaviour starts
+	private int b;
+	private double t;
+	private double incr;
 
-	public BezierCurveBehaviour (JPanel panel, AbstractEnemy gameEntity, 
+	private int saveX;
+	private int saveY;
+
+	public BezierCurveBehaviour (JPanel panel, AbstractEnemy gameEntity,
 				     Point p0, Point p1, Point p2) {
 
 		this.panel = panel;
@@ -40,24 +40,21 @@ public class BezierCurveBehaviour implements Behaviour {
 		this.p1 = p1;
 		this.p2 = p2;
 
-		active = false;		// behaviour is inactive by default
+		active = false;
 
 		t = START;
 		incr = INCR;
 	}
 
-
 	public boolean isActive() {
 		return active;
 	}
-
 
 	public void activate() {
 		active = true;
 		saveX = gameEntity.getX();
 		saveY = gameEntity.getY();
 	}
-	
 
 	public void deActivate() {
 		active = false;
@@ -65,25 +62,22 @@ public class BezierCurveBehaviour implements Behaviour {
 		gameEntity.setY(saveY);
 	}
 
+	public void update () {
 
-   	public void update () {  
-
-		if (!active || !panel.isVisible ()) 
+		if (!active || !panel.isVisible ())
 			return;
 
-      		t = t + incr;
+		t = t + incr;
 
-      		if (t > END) {
+		if (t > END) {
 			t = END;
-         		incr = INCR * -1.0;
+		incr = INCR * -1.0;
 		}
 		else
 		if (t < START) {
 			t = START;
-         		incr = INCR;
+		incr = INCR;
 		}
-
-		//System.out.println("t = " + t);
 
 		int x = (int) 	((1 - t) * (1 - t) * p0.x +
 				 2 * (1 - t) * t * p1.x +

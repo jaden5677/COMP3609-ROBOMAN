@@ -13,14 +13,13 @@ public class SolidObject {
 	private int height;
 	private Color colour;
 
-	public SolidObject (int xPos, int yPos, int width, int height, Color c) { 
+	public SolidObject (int xPos, int yPos, int width, int height, Color c) {
 		x = xPos;
 		y = yPos;
 		this.width = width;
 		this.height = height;
 		colour = c;
 	}
-
 
 	public void draw (Graphics2D g2) {
 
@@ -29,26 +28,21 @@ public class SolidObject {
 		g2.fill(solidObject);
 	}
 
-
 	public Rectangle2D.Double getBoundingRectangle() {
 		return new Rectangle2D.Double (x, y, width, height);
 	}
-
 
 	public int getX() {
 		return x;
 	}
 
-
 	public int getY() {
 		return y;
 	}
 
-
 	public int getWidth() {
 		return width;
 	}
-
 
 	public int getHeight() {
 		return height;

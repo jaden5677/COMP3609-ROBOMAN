@@ -19,7 +19,6 @@ public abstract class Enemy extends AbstractEnemy {
     protected List<Projectile> projectiles;
     protected Color fallbackColor;
 
-    // Gravity for ground-based enemies
     protected boolean affectedByGravity;
     protected int fallSpeed;
     private static final int MAX_FALL = 8;
@@ -65,11 +64,6 @@ public abstract class Enemy extends AbstractEnemy {
         }
     }
 
-    /**
-     * Per-frame hitbox: tight opaque-pixel bounds of the current frame mapped
-     * onto this entity's full draw rect (which {@link #drawSelf} stretches
-     * from the source frame to {@code width x height}).
-     */
     @Override
     public java.awt.geom.Rectangle2D.Double getBoundingRectangle() {
         BufferedImage frame = getCurrentFrame();
@@ -83,7 +77,12 @@ public abstract class Enemy extends AbstractEnemy {
         int fh = frame.getHeight();
         double sx = (double) width  / fw;
         double sy = (double) height / fh;
-        double bx = facingRight ? b.x : (fw - b.x - b.width);
+        double bx;
+        if (facingRight) {
+            bx = b.x;
+        } else {
+            bx = fw - b.x - b.width;
+        }
         return new java.awt.geom.Rectangle2D.Double(
             x + bx * sx,
             y + b.y * sy,
