@@ -75,17 +75,26 @@ public class Projectile extends AbstractEntity {
     }
 
     public boolean collidesWithTile(Level level) {
-        return level.isSolid(x, y) || level.isSolid(x + width, y + height);
+
+        Rectangle2D.Double r = getBoundingRectangle();
+        int left   = (int) r.x;
+        int right  = (int) (r.x + r.width  - 1);
+        int top    = (int) r.y;
+        int bottom = (int) (r.y + r.height - 1);
+        return level.isSolid(left, top)    || level.isSolid(right, top) ||
+               level.isSolid(left, bottom) || level.isSolid(right, bottom);
     }
 
     public Type getType() { return type; }
     public int getProjectileDamage() { return projectileDamage; }
 
-    /**
-     * Per-frame hitbox: when a sprite is supplied, use its tight opaque-pixel
-     * bounds mapped onto the on-screen draw rect (`x, y, width, height`).
-     * For the placeholder oval/no-sprite path, fall back to the full rect.
-     */
+    public void reflect() {
+        this.dx = -this.dx;
+        this.dy = -this.dy;
+        this.type = Type.ENEMY_NORMAL;
+        this.lifetime = MAX_LIFETIME;
+    }
+
     @Override
     public Rectangle2D.Double getBoundingRectangle() {
         if (sprite == null) return super.getBoundingRectangle();

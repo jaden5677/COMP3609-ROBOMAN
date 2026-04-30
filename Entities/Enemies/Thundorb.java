@@ -1,32 +1,28 @@
 package Entities.Enemies;
 
 import java.awt.Color;
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 
 import Entities.Player.Player;
 import Entities.Projectiles.Projectile;
 import ImageManager.SpriteSheetExtractor;
-//import ImageManager.ImageManager;
+
 import MainGame.Level;
 
-/**
- * Thundorb - Floating orb that shoots up to 4 electric orbs, then retreats
- * to reload. Electric orbs stun the player for 2 seconds. If the player gets
- * too close, the player is stunned and Thundorb loses a charge. Worth 350 pts.
- */
 public class Thundorb extends Enemy {
 
     private static final int POINTS = 350;
     private static final int HEALTH = 40;
     private static final int MAX_CHARGES = 4;
-    private static final int RELOAD_TICKS = 60;          // 3 sec
-    private static final int SHOOT_INTERVAL_TICKS = 15;  // 0.75 sec
+    private static final int RELOAD_TICKS = 60;
+    private static final int SHOOT_INTERVAL_TICKS = 15;
     private static final int STUN_RANGE = 40;
     private static final int STUN_DURATION_MS = 2000;
     private static final int SHOOT_RANGE = 200;
     private static final int RETREAT_SPEED = 3;
     private static final int ORB_DAMAGE = 5;
-    private static final int LOSE_CHARGE_TICKS = 18;     // how long the lose-charge anim plays
+    private static final int LOSE_CHARGE_TICKS = 18;
 
     private int charges;
     private int reloadTimer;
@@ -35,18 +31,16 @@ public class Thundorb extends Enemy {
     private int floatTick;
     private int baseY;
 
-    // Animation states
     private enum AnimState { POWERED, LOSING_CHARGE, RETREATING }
     private AnimState animState;
     private int loseChargeTimer;
 
-    // Sprite sets (56x56 cells)
-    private BufferedImage[] poweredRightFrames;     // row 0, cols 0-1
-    private BufferedImage[] poweredLeftFrames;       // row 0, cols 2-3
-    private BufferedImage[] loseChargeRightFrames;   // row 1, 3 frames
-    private BufferedImage[] loseChargeLeftFrames;    // row 2, 3 frames
-    private BufferedImage[] retreatFrames;           // row 3, cols 0-1
-    private BufferedImage projectileSprite;          // row 3, col 3
+    private BufferedImage[] poweredRightFrames;
+    private BufferedImage[] poweredLeftFrames;
+    private BufferedImage[] loseChargeRightFrames;
+    private BufferedImage[] loseChargeLeftFrames;
+    private BufferedImage[] retreatFrames;
+    private BufferedImage projectileSprite;
 
     public Thundorb(int x, int y, Player player, Level level) {
         super(x, y, 72, 72, HEALTH, POINTS, player, level);
@@ -55,13 +49,31 @@ public class Thundorb extends Enemy {
         this.shootTimer = 0;
         this.retreating = false;
         this.floatTick = 0;
-        this.baseY = y;
+
+        this.baseY = clampAboveSolids(level, x, y);
+        this.y = baseY;
         this.fallbackColor = Color.CYAN;
         this.animSpeed = 8;
-        this.affectedByGravity = false; // floats
+        this.affectedByGravity = false;
         this.animState = AnimState.POWERED;
         this.loseChargeTimer = 0;
         loadSprites();
+    }
+
+    private int clampAboveSolids(Level level, int spawnX, int spawnY) {
+        int probeXLeft  = spawnX + 4;
+        int probeXRight = spawnX + width - 4;
+        int floatPad    = 8;
+        int bottom      = spawnY + height + floatPad;
+        int maxScan     = Level.TILE_SIZE * 4;
+        for (int dy = 0; dy < maxScan; dy += 4) {
+            int b = bottom + dy;
+            if (level.isSolid(probeXLeft, b) || level.isSolid(probeXRight, b)) {
+                int tileTop = (b / Level.TILE_SIZE) * Level.TILE_SIZE;
+                return tileTop - height - floatPad - 1;
+            }
+        }
+        return spawnY;
     }
 
     private void loadSprites() {
@@ -71,7 +83,7 @@ public class Thundorb extends Enemy {
             if (sheet != null) {
                 int fw = 56;
                 int fh = 56;
-                // Row 0: powered up — cols 0-1 right, cols 2-3 left
+
                 poweredRightFrames = new BufferedImage[] {
                     ext.extractSprite(sheet, 0, 0, fw, fh),
                     ext.extractSprite(sheet, fw, 0, fw, fh)
@@ -80,11 +92,11 @@ public class Thundorb extends Enemy {
                     ext.extractSprite(sheet, 2 * fw, 0, fw, fh),
                     ext.extractSprite(sheet, 3 * fw, 0, fw, fh)
                 };
-                // Row 1: lose charge facing right (3 frames)
+
                 loseChargeRightFrames = ext.extractRow(sheet, 1, 3, fw, fh);
-                // Row 2: lose charge facing left (3 frames)
+
                 loseChargeLeftFrames = ext.extractRow(sheet, 2, 3, fw, fh);
-                // Row 3: retreat (cols 0-1) + projectile (col 3)
+
                 retreatFrames = new BufferedImage[] {
                     ext.extractSprite(sheet, 0, 3 * fh, fw, fh),
                     ext.extractSprite(sheet, fw, 3 * fh, fw, fh)
@@ -102,11 +114,9 @@ public class Thundorb extends Enemy {
     public void update() {
         if (!alive) return;
 
-        // Float up and down
         floatTick++;
         y = baseY + (int)(Math.sin(floatTick * 0.1) * 4);
 
-        // Losing-charge animation countdown
         if (animState == AnimState.LOSING_CHARGE) {
             loseChargeTimer--;
             if (loseChargeTimer <= 0) {
@@ -120,18 +130,22 @@ public class Thundorb extends Enemy {
             }
             animate();
             updateAnimFrames();
-            return; // pause actions during lose-charge animation
+            return;
         }
 
-        // Proximity stun — costs a charge
         if (distanceToPlayer() <= STUN_RANGE && !player.isStunned()) {
             player.stun(STUN_DURATION_MS);
             spendCharge();
         }
 
         if (retreating) {
-            // Move away from player
-            int dir = player.getX() > x ? -1 : 1;
+
+            int dir;
+            if (player.getX() > x) {
+                dir = -1;
+            } else {
+                dir = 1;
+            }
             x += dir * RETREAT_SPEED;
             reloadTimer--;
             if (reloadTimer <= 0) {
@@ -154,7 +168,6 @@ public class Thundorb extends Enemy {
         animate();
     }
 
-    /** Spend one charge and trigger the lose-charge animation. */
     private void spendCharge() {
         charges--;
         animState = AnimState.LOSING_CHARGE;
@@ -164,15 +177,22 @@ public class Thundorb extends Enemy {
         updateAnimFrames();
     }
 
-    /** Switch animFrames based on current state and facing direction. */
     private void updateAnimFrames() {
         BufferedImage[] target = null;
         switch (animState) {
             case POWERED:
-                target = facingRight ? poweredRightFrames : poweredLeftFrames;
+                if (facingRight) {
+                    target = poweredRightFrames;
+                } else {
+                    target = poweredLeftFrames;
+                }
                 break;
             case LOSING_CHARGE:
-                target = facingRight ? loseChargeRightFrames : loseChargeLeftFrames;
+                if (facingRight) {
+                    target = loseChargeRightFrames;
+                } else {
+                    target = loseChargeLeftFrames;
+                }
                 break;
             case RETREATING:
                 target = retreatFrames;
@@ -196,5 +216,19 @@ public class Thundorb extends Enemy {
         int pdy = (int)(Math.sin(angle) * speed);
         projectiles.add(new Projectile(ox - 12, oy - 12, pdx, pdy,
             Projectile.Type.ENEMY_ELECTRIC, ORB_DAMAGE, projectileSprite));
+    }
+
+    @Override
+    protected void drawSelf(Graphics2D g) {
+        BufferedImage frame = getCurrentFrame();
+        if (frame == null) { super.drawSelf(g); return; }
+        int fw = frame.getWidth();
+        int fh = frame.getHeight();
+        double scale = Math.min((double) width / fw, (double) height / fh);
+        int drawW = (int)(fw * scale);
+        int drawH = (int)(fh * scale);
+        int offsetX = (width - drawW) / 2;
+        int offsetY = height - drawH;
+        g.drawImage(frame, x + offsetX, y + offsetY, drawW, drawH, null);
     }
 }

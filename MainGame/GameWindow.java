@@ -14,12 +14,16 @@ public class GameWindow extends JFrame implements ActionListener {
 
     public GameWindow() {
         setTitle("My Game");
-        setSize(1500, 1500);
+        setSize(GamePanel.SCREEN_WIDTH, GamePanel.SCREEN_HEIGHT);
+        setResizable(false);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
         gamePanel = new GamePanel();
+        gamePanel.setPreferredSize(new Dimension(GamePanel.SCREEN_WIDTH, GamePanel.SCREEN_HEIGHT));
         add(gamePanel, BorderLayout.CENTER);
+        pack();
+        setLocationRelativeTo(null);
     }
 
     public void startGame() {
@@ -30,7 +34,7 @@ public class GameWindow extends JFrame implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        // Handle action events here
+
     }
 
 }

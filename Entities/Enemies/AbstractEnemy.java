@@ -13,10 +13,6 @@ import Behaviours.Behaviour;
 import Entities.AbstractEntity;
 import ImageManager.SpriteSheetExtractor;
 
-/**
- * Common base for every enemy. Adds combat / scoring fields on top of
- * the rendering and animation features inherited from {@link AbstractEntity}.
- */
 public abstract class AbstractEnemy extends AbstractEntity implements EnemyInterface {
 
     public int points;
@@ -26,7 +22,6 @@ public abstract class AbstractEnemy extends AbstractEntity implements EnemyInter
     protected SpriteSheetExtractor extractor = SpriteSheetExtractor.getInstance();
     public ArrayList<Behaviour> behaviours;
 
-    /** Cache of tight opaque-pixel bounds per source frame. */
     private final Map<BufferedImage, Rectangle> hitboxCache = new IdentityHashMap<>();
 
     public AbstractEnemy(int x, int y, String imagePath) {
@@ -62,7 +57,7 @@ public abstract class AbstractEnemy extends AbstractEntity implements EnemyInter
             int drawW = (int)(fw * scale);
             int drawH = (int)(fh * scale);
             int offsetX = (width - drawW) / 2;
-            int offsetY = height - drawH; // align to bottom (feet on ground)
+            int offsetY = height - drawH;
             if (facingRight) {
                 g.drawImage(frame, x + offsetX, y + offsetY, drawW, drawH, null);
             } else {
@@ -76,15 +71,6 @@ public abstract class AbstractEnemy extends AbstractEntity implements EnemyInter
         }
     }
 
-    // EnemyInterface ----------------------------------------------------------
-
-    /**
-     * Per-frame hitbox: maps the tight opaque-pixel bounds of the current
-     * sprite frame onto the same on-screen rectangle that {@link #drawSelf}
-     * uses (aspect-preserving scale, bottom-aligned). This keeps the hitbox
-     * snug against the visible art instead of the full {@code width x height}
-     * cell, which usually has transparent padding.
-     */
     @Override
     public Rectangle2D.Double getBoundingRectangle() {
         BufferedImage frame = getCurrentFrame();
@@ -100,8 +86,13 @@ public abstract class AbstractEnemy extends AbstractEntity implements EnemyInter
         double drawW = fw * scale;
         double drawH = fh * scale;
         double offsetX = (width - drawW) / 2.0;
-        double offsetY = height - drawH; // bottom-aligned
-        double bx = facingRight ? b.x : (fw - b.x - b.width); // mirror when flipped
+        double offsetY = height - drawH;
+        double bx;
+        if (facingRight) {
+            bx = b.x;
+        } else {
+            bx = fw - b.x - b.width;
+        }
         return new Rectangle2D.Double(
             x + offsetX + bx * scale,
             y + offsetY + b.y * scale,

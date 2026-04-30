@@ -15,11 +15,10 @@ public class Camera {
     }
 
     public void follow(Player player, int mapPixelWidth, int mapPixelHeight) {
-        // Centre on player
+
         x = player.getX() + player.getWidth() / 2 - screenWidth / 2;
         y = player.getY() + player.getHeight() / 2 - screenHeight / 2;
 
-        // Clamp to map bounds
         if (x < 0) x = 0;
         if (y < 0) y = 0;
         int maxX = mapPixelWidth - screenWidth;

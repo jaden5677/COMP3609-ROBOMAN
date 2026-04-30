@@ -1,14 +1,11 @@
 package Entities.Items;
 
 import java.awt.Color;
+import java.awt.image.BufferedImage;
 
 import Entities.Player.PlayerInterface;
+import ImageManager.SpriteSheetExtractor;
 
-/**
- * Swaps the player's weapon to a different firing pattern.
- *  - TRIPLE_SHOT : fires three projectiles in a small spread
- *  - CHARGE_SHOT : holding fire charges a heavier shot
- */
 public class GunType extends AbstractItem {
 
     public enum Variant {
@@ -21,16 +18,34 @@ public class GunType extends AbstractItem {
 
     public final Variant variant;
 
+    private static BufferedImage tripleSprite;
+    private static BufferedImage chargeSprite;
+    private static void ensureSprites() {
+        if (tripleSprite != null && chargeSprite != null) return;
+        SpriteSheetExtractor ext = SpriteSheetExtractor.getInstance();
+        BufferedImage sheet = ext.loadSpriteSheet("TileSets/Gun.png");
+        if (sheet == null) return;
+        chargeSprite = ext.extractSprite(sheet, 5 * 16, 0 * 16, 16, 16);
+        tripleSprite = ext.extractSprite(sheet, 6 * 16, 0 * 16, 16, 16);
+    }
+
     public GunType(int x, int y, String imagePath, Variant variant) {
         super(x, y, imagePath, ItemType.GunType);
         this.variant = variant;
+        ensureSprites();
+        if (variant == Variant.TRIPLE_SHOT) {
+            this.sprite = tripleSprite;
+        } else {
+            this.sprite = chargeSprite;
+        }
     }
 
     @Override
     protected Color placeholderColor() {
-        return variant == Variant.TRIPLE_SHOT
-            ? new Color(255, 220,  40)   // bright yellow for triple
-            : new Color(180,  60, 220);  // purple for charge
+        if (variant == Variant.TRIPLE_SHOT) {
+            return new Color(255, 220, 40);
+        }
+        return new Color(180, 60, 220);
     }
 
     @Override

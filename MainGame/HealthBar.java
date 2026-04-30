@@ -14,26 +14,29 @@ public class HealthBar {
     private static final int Y = 30;
 
     public void draw(Graphics2D g2, Player player) {
-        // Background
+
         g2.setColor(Color.DARK_GRAY);
         g2.fillRect(X, Y, BAR_WIDTH, BAR_HEIGHT);
 
-        // Health fill
         float pct = (float) player.getHealth() / player.getMaxHealth();
-        Color fill = pct > 0.5f ? Color.GREEN : pct > 0.25f ? Color.YELLOW : Color.RED;
+        Color fill;
+        if (pct > 0.5f) {
+            fill = Color.GREEN;
+        } else if (pct > 0.25f) {
+            fill = Color.YELLOW;
+        } else {
+            fill = Color.RED;
+        }
         g2.setColor(fill);
         g2.fillRect(X, Y, (int)(BAR_WIDTH * pct), BAR_HEIGHT);
 
-        // Border
         g2.setColor(Color.WHITE);
         g2.drawRect(X, Y, BAR_WIDTH, BAR_HEIGHT);
 
-        // HP text
         g2.setFont(new Font("Arial", Font.BOLD, 36));
         g2.drawString("HP: " + player.getHealth() + "/" + player.getMaxHealth(),
                        X + 15, Y + 45);
 
-        // Lives / deaths
         g2.drawString("Lives: " + player.getLives()
                      + "  Deaths: " + player.getDeathsInLevel() + "/3",
                        X, Y + BAR_HEIGHT + 45);

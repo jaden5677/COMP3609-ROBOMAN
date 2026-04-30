@@ -2,8 +2,6 @@ package MainGame;
 
 import javax.swing.JPanel;
 
-
-
 public class GameThread implements Runnable {
 
 	private GamePanel gamePanel;
@@ -16,11 +14,9 @@ public class GameThread implements Runnable {
 		isPaused = false;
 	}
 
-	
 	boolean isRunning () {
 		return isRunning;
 	}
-
 
 	public void pauseGame() {
 
@@ -32,21 +28,17 @@ public class GameThread implements Runnable {
 		}
 	}
 
-
 	public void endGame() {
 		isRunning = false;
 	}
-
 
 	private void gameUpdate() {
 		gamePanel.gameUpdate();
 	}
 
-
 	private void gameRender() {
 		gamePanel.gameRender();
 	}
-
 
 	public void run () {
 		try {
@@ -55,7 +47,7 @@ public class GameThread implements Runnable {
 				if (!isPaused)
 					gameUpdate();
 				gameRender();
-				Thread.sleep (20);	
+				Thread.sleep (20);
 			}
 		}
 		catch(InterruptedException e) {}

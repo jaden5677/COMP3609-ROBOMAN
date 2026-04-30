@@ -6,20 +6,11 @@ import java.awt.Rectangle;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 
-/**
- * Shared implementation for every entity (Player, Enemy, Item, Projectile, ...).
- * Owns position, size, visibility, velocity and basic frame-based animation
- * so concrete subclasses only have to implement category-specific behaviour.
- */
 public abstract class AbstractEntity implements EntityInterface {
 
-    // ---- DEBUG ----
-    // Flip to false (or comment out the drawHitbox() calls in subclass draw())
-    // to disable the red hitbox outline drawn around every entity.
     public static boolean DEBUG_HITBOXES = true;
     public static Color DEBUG_HITBOX_COLOR = Color.RED;
 
-    /** Draws a 1px outline of this entity's bounding rectangle (no-op if disabled). */
     protected void drawHitbox(Graphics2D g2) {
         if (!DEBUG_HITBOXES) return;
         Rectangle2D.Double r = getBoundingRectangle();
@@ -29,29 +20,24 @@ public abstract class AbstractEntity implements EntityInterface {
         g2.setColor(prev);
     }
 
-    // Position / size
     public int x;
     public int y;
     public int width;
     public int height;
 
-    // Velocity
     public int dx;
     public int dy;
 
-    // Rendering
     public boolean isVisible;
     public boolean facingRight;
     public java.awt.Image image;
     public String imagePath;
 
-    // Animation
     protected BufferedImage[] animFrames;
     protected int currentFrame;
     protected int animTick;
     protected int animSpeed;
 
-    // Previous-position tracking (for erase-and-redraw renderers)
     protected int prevX;
     protected int prevY;
     protected int prevWidth;
@@ -71,8 +57,6 @@ public abstract class AbstractEntity implements EntityInterface {
         this.animSpeed = 5;
     }
 
-    // ---------------- Animation helpers ----------------
-
     protected BufferedImage getCurrentFrame() {
         if (animFrames != null && animFrames.length > 0) {
             return animFrames[currentFrame % animFrames.length];
@@ -90,9 +74,6 @@ public abstract class AbstractEntity implements EntityInterface {
         }
     }
 
-    // ---------------- Erase / draw helpers ----------------
-
-    /** Saves the current position as the previous position (call before updating). */
     public void savePreviousPosition() {
         prevX = x;
         prevY = y;
@@ -100,20 +81,27 @@ public abstract class AbstractEntity implements EntityInterface {
         prevHeight = height;
     }
 
-    /** Paints over the previous position with the given background colour. */
     public void erase(Graphics2D g, Color bgColor) {
+        int eraseWidth;
+        int eraseHeight;
+        if (prevWidth > 0) {
+            eraseWidth = prevWidth;
+        } else {
+            eraseWidth = width;
+        }
+        if (prevHeight > 0) {
+            eraseHeight = prevHeight;
+        } else {
+            eraseHeight = height;
+        }
         g.setColor(bgColor);
-        g.fillRect(prevX, prevY,
-                   prevWidth  > 0 ? prevWidth  : width,
-                   prevHeight > 0 ? prevHeight : height);
+        g.fillRect(prevX, prevY, eraseWidth, eraseHeight);
     }
 
     public void eraseAndDraw(Graphics2D g, Color bgColor) {
         erase(g, bgColor);
         draw(g);
     }
-
-    // ---------------- EntityInterface ----------------
 
     @Override public int getX() { return x; }
     @Override public int getY() { return y; }
@@ -133,12 +121,6 @@ public abstract class AbstractEntity implements EntityInterface {
 
     @Override public abstract void update();
 
-    /**
-     * Template method. Subclasses implement {@link #drawSelf(Graphics2D)} for
-     * their own rendering; this base method then overlays the debug hitbox
-     * (when {@link #DEBUG_HITBOXES} is true) so individual entities don't
-     * have to remember to do it.
-     */
     @Override
     public final void draw(Graphics2D g2) {
         if (!isVisible) return;
@@ -146,15 +128,8 @@ public abstract class AbstractEntity implements EntityInterface {
         drawHitbox(g2);
     }
 
-    /** Subclass-specific rendering. Called by {@link #draw(Graphics2D)}. */
     protected abstract void drawSelf(Graphics2D g2);
 
-    /**
-     * Computes the tight bounding rectangle (in source-image pixel coords)
-     * of the non-transparent pixels in {@code img}. Returns the full image
-     * rect when the image has no alpha channel or is fully opaque/empty.
-     * Use this to build per-frame hitboxes that match the visible sprite.
-     */
     public static Rectangle opaqueBounds(BufferedImage img) {
         if (img == null) return new Rectangle(0, 0, 0, 0);
         int w = img.getWidth();

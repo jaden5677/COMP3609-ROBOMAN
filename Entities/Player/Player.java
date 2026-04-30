@@ -12,49 +12,39 @@ import java.util.Map;
 
 import Entities.Projectiles.Projectile;
 import ImageManager.SpriteSheetExtractor;
+import ImageManager.WhiteFlashFX;
 import MainGame.Level;
 
 public class Player extends AbstractPlayer {
 
-    // Physics
-    private int speed = 5;
-    private int jumpStrength = -20;
-    private static final int GRAVITY = 1;
-    private static final int MAX_FALL_SPEED = 10;
+private int speed = 9;
+    private int jumpStrength = -28;
+    private static final int GRAVITY = 2;
+    private static final int MAX_FALL_SPEED = 18;
 
     private boolean onGround;
 
-    // Shooting
     private long lastShotTime;
     private static final long SHOT_COOLDOWN = 500;
     private int damageBonus = 0;
     private GunType gunType = GunType.NORMAL;
     private long chargeStartTime = -1;
 
-    // Stun
     private boolean stunned;
     private long stunEndTime;
 
-    // Spawn
     private int spawnX;
     private int spawnY;
 
-    // Input state (set by GamePanel key listener)
     private boolean moveLeft;
     private boolean moveRight;
     private boolean jumpPressed;
     private boolean shootPressed;
 
-    // Level reference for collision
     private Level level;
 
-    // Animation sets (all extracted from RoboManFull.png — 6 cols x 6 rows of 40x36)
-    // Row 0: facing right        — col 0 idle, cols 1-3 run, cols 4-5 jump/fall
-    // Row 1: facing left         — col 3 idle, cols 2-0 run, cols 4-5 jump/fall
-    // Row 2: facing left shoot   — col 3 stationary shoot, cols 2-0 run-shoot
-    // Row 3: facing right shoot  — col 3 stationary shoot, cols 0-2 run-shoot
-    // Row 4: bombs               — cols 0-1 throw right, cols 2-3 throw left, cols 4-5 bomb left/right
-    // Row 5: projectiles         — col 0 normal bullet, cols 1 & 2 triple-shot bullets
+    private final WhiteFlashFX hitFlash = new WhiteFlashFX();
+
     private BufferedImage[] idleRightFrames;
     private BufferedImage[] idleLeftFrames;
     private BufferedImage[] runRightFrames;
@@ -74,13 +64,11 @@ public class Player extends AbstractPlayer {
     private BufferedImage  tripleBulletDownSprite;
     private String currentAnim;
 
-    // Source frame dims (used to map per-frame opaque bounds to screen coords)
     private static final int SRC_FW = 40;
     private static final int SRC_FH = 36;
-    // Cache of tight opaque bounds per source frame (lazy-filled).
+
     private final Map<BufferedImage, Rectangle> hitboxCache = new IdentityHashMap<>();
 
-    // Projectiles created by shooting
     private List<Projectile> projectiles;
 
     public Player(int x, int y, Level level) {
@@ -111,7 +99,6 @@ public class Player extends AbstractPlayer {
             final int fw = 40;
             final int fh = 36;
 
-            // ---- Row 0: facing right (idle / run / jump) ----
             BufferedImage row0c0 = ext.extractSprite(sheet, 0 * fw, 0 * fh, fw, fh);
             BufferedImage row0c1 = ext.extractSprite(sheet, 1 * fw, 0 * fh, fw, fh);
             BufferedImage row0c2 = ext.extractSprite(sheet, 2 * fw, 0 * fh, fw, fh);
@@ -122,7 +109,6 @@ public class Player extends AbstractPlayer {
             runRightFrames  = new BufferedImage[]{ row0c1, row0c2, row0c3 };
             jumpRightFrames = new BufferedImage[]{ row0c4, row0c5 };
 
-            // ---- Row 1: facing left (idle col 3, run cols 2->0, jump cols 4-5) ----
             BufferedImage row1c0 = ext.extractSprite(sheet, 0 * fw, 1 * fh, fw, fh);
             BufferedImage row1c1 = ext.extractSprite(sheet, 1 * fw, 1 * fh, fw, fh);
             BufferedImage row1c2 = ext.extractSprite(sheet, 2 * fw, 1 * fh, fw, fh);
@@ -133,7 +119,6 @@ public class Player extends AbstractPlayer {
             runLeftFrames  = new BufferedImage[]{ row1c2, row1c1, row1c0 };
             jumpLeftFrames = new BufferedImage[]{ row1c4, row1c5 };
 
-            // ---- Row 2: facing left + shooting (stationary col 3, running cols 2->0) ----
             BufferedImage row2c0 = ext.extractSprite(sheet, 0 * fw, 2 * fh, fw, fh);
             BufferedImage row2c1 = ext.extractSprite(sheet, 1 * fw, 2 * fh, fw, fh);
             BufferedImage row2c2 = ext.extractSprite(sheet, 2 * fw, 2 * fh, fw, fh);
@@ -141,7 +126,6 @@ public class Player extends AbstractPlayer {
             shootIdleLeftFrames = new BufferedImage[]{ row2c3 };
             shootRunLeftFrames  = new BufferedImage[]{ row2c2, row2c1, row2c0 };
 
-            // ---- Row 3: facing right + shooting (running cols 0-2, stationary col 3) ----
             BufferedImage row3c0 = ext.extractSprite(sheet, 0 * fw, 3 * fh, fw, fh);
             BufferedImage row3c1 = ext.extractSprite(sheet, 1 * fw, 3 * fh, fw, fh);
             BufferedImage row3c2 = ext.extractSprite(sheet, 2 * fw, 3 * fh, fw, fh);
@@ -149,7 +133,6 @@ public class Player extends AbstractPlayer {
             shootIdleRightFrames = new BufferedImage[]{ row3c3 };
             shootRunRightFrames  = new BufferedImage[]{ row3c0, row3c1, row3c2 };
 
-            // ---- Row 4: bombs ----
             BufferedImage row4c0 = ext.extractSprite(sheet, 0 * fw, 4 * fh, fw, fh);
             BufferedImage row4c1 = ext.extractSprite(sheet, 1 * fw, 4 * fh, fw, fh);
             BufferedImage row4c2 = ext.extractSprite(sheet, 2 * fw, 4 * fh, fw, fh);
@@ -161,7 +144,6 @@ public class Player extends AbstractPlayer {
             bombLeftSprite   = row4c4;
             bombRightSprite  = row4c5;
 
-            // ---- Row 5: projectile sprites ----
             bulletSprite           = ext.extractSprite(sheet, 0 * fw, 5 * fh, fw, fh);
             tripleBulletUpSprite   = ext.extractSprite(sheet, 1 * fw, 5 * fh, fw, fh);
             tripleBulletDownSprite = ext.extractSprite(sheet, 2 * fw, 5 * fh, fw, fh);
@@ -183,12 +165,10 @@ public class Player extends AbstractPlayer {
             return;
         }
 
-        // Horizontal movement
         dx = 0;
         if (moveLeft)  { dx = -speed; facingRight = false; }
         if (moveRight) { dx =  speed; facingRight = true;  }
 
-        // Jump
         if (jumpPressed && onGround) {
             dy = jumpStrength;
             onGround = false;
@@ -211,14 +191,13 @@ public class Player extends AbstractPlayer {
     }
 
     private void moveWithCollision() {
-        // Horizontal
+
         int newX = x + dx;
         if (!collidesWithLevel(newX, y)) {
             x = newX;
         }
         applyVerticalCollision();
 
-        // Fallen off map
         if (y > level.getMapHeight() * Level.TILE_SIZE + 300) {
             die();
         }
@@ -237,8 +216,7 @@ public class Player extends AbstractPlayer {
             }
         } else if (dy < 0) {
             if (collidesWithLevel(x, newY)) {
-                // Snap the player's top to the bottom edge of the tile we
-                // bonked into (using newY, the position that actually collided).
+
                 y = (newY / Level.TILE_SIZE + 1) * Level.TILE_SIZE;
                 dy = 0;
             } else {
@@ -260,39 +238,63 @@ public class Player extends AbstractPlayer {
         long now = System.currentTimeMillis();
         if (now - lastShotTime < SHOT_COOLDOWN) return;
 
-        int projX  = facingRight ? x + width : x - 24;
-        int projY  = y + height / 2 - 12;
-        int projDx = facingRight ? 8 : -8;
+        final int BULLET_SIZE = 120;
+
+        int projX;
+        if (facingRight) {
+            projX = x + width - 52;
+        } else {
+            projX = x - BULLET_SIZE + 52;
+        }
+        int projY  = y + height / 3 - BULLET_SIZE / 2 - 22;
+
+        int projDx;
+        if (facingRight) {
+            projDx = 14;
+        } else {
+            projDx = -14;
+        }
         int dmg    = 10 + damageBonus;
 
         switch (gunType) {
             case TRIPLE_SHOT:
-                projectiles.add(new Projectile(projX, projY,      projDx,  0,
-                    Projectile.Type.PLAYER_LIGHT, dmg, bulletSprite));
-                projectiles.add(new Projectile(projX, projY - 14, projDx, -2,
-                    Projectile.Type.PLAYER_LIGHT, dmg, tripleBulletUpSprite));
-                projectiles.add(new Projectile(projX, projY + 14, projDx,  2,
-                    Projectile.Type.PLAYER_LIGHT, dmg, tripleBulletDownSprite));
+                addBullet(new Projectile(projX, projY,                projDx,  0,
+                    Projectile.Type.PLAYER_LIGHT, dmg, bulletSprite),           BULLET_SIZE);
+                addBullet(new Projectile(projX, projY - BULLET_SIZE / 3, projDx, -2,
+                    Projectile.Type.PLAYER_LIGHT, dmg, tripleBulletUpSprite),   BULLET_SIZE);
+                addBullet(new Projectile(projX, projY + BULLET_SIZE / 3, projDx,  2,
+                    Projectile.Type.PLAYER_LIGHT, dmg, tripleBulletDownSprite), BULLET_SIZE);
                 break;
             case CHARGE_SHOT:
-                // Hold-to-charge: longer hold => heavier shot.
-                long held = chargeStartTime > 0 ? now - chargeStartTime : 0;
-                if (held >= 600) {
-                    projectiles.add(new Projectile(projX, projY, projDx * 2, 0,
-                        Projectile.Type.PLAYER_HEAVY, dmg * 3, bulletSprite));
+
+                long held;
+                if (chargeStartTime > 0) {
+                    held = now - chargeStartTime;
                 } else {
-                    projectiles.add(new Projectile(projX, projY, projDx, 0,
-                        Projectile.Type.PLAYER_LIGHT, dmg, bulletSprite));
+                    held = 0;
+                }
+                if (held >= 600) {
+                    addBullet(new Projectile(projX, projY, projDx * 2, 0,
+                        Projectile.Type.PLAYER_HEAVY, dmg * 3, bulletSprite), BULLET_SIZE);
+                } else {
+                    addBullet(new Projectile(projX, projY, projDx, 0,
+                        Projectile.Type.PLAYER_LIGHT, dmg, bulletSprite), BULLET_SIZE);
                 }
                 chargeStartTime = -1;
                 break;
             case NORMAL:
             default:
-                projectiles.add(new Projectile(projX, projY, projDx, 0,
-                    Projectile.Type.PLAYER_LIGHT, dmg, bulletSprite));
+                addBullet(new Projectile(projX, projY, projDx, 0,
+                    Projectile.Type.PLAYER_LIGHT, dmg, bulletSprite), BULLET_SIZE);
                 break;
         }
         lastShotTime = now;
+    }
+
+    private void addBullet(Projectile p, int size) {
+        p.width  = size;
+        p.height = size;
+        projectiles.add(p);
     }
 
     private void updateAnimation() {
@@ -303,30 +305,59 @@ public class Player extends AbstractPlayer {
         boolean moving   = dx != 0;
 
         if (!onGround) {
-            // Jumping / falling — use jump frames; if also shooting, fall back to
-            // the shoot-run frames so the gun is visible mid-air.
+
             if (shooting) {
-                newFrames = facingRight ? shootRunRightFrames : shootRunLeftFrames;
-                newAnim   = facingRight ? "shoot-jump-right"  : "shoot-jump-left";
+                if (facingRight) {
+                    newFrames = shootRunRightFrames;
+                    newAnim = "shoot-jump-right";
+                } else {
+                    newFrames = shootRunLeftFrames;
+                    newAnim = "shoot-jump-left";
+                }
             } else {
-                newFrames = facingRight ? jumpRightFrames : jumpLeftFrames;
-                newAnim   = facingRight ? "jump-right"   : "jump-left";
+                if (facingRight) {
+                    newFrames = jumpRightFrames;
+                    newAnim = "jump-right";
+                } else {
+                    newFrames = jumpLeftFrames;
+                    newAnim = "jump-left";
+                }
             }
         } else if (moving) {
             if (shooting) {
-                newFrames = facingRight ? shootRunRightFrames : shootRunLeftFrames;
-                newAnim   = facingRight ? "shoot-run-right"   : "shoot-run-left";
+                if (facingRight) {
+                    newFrames = shootRunRightFrames;
+                    newAnim = "shoot-run-right";
+                } else {
+                    newFrames = shootRunLeftFrames;
+                    newAnim = "shoot-run-left";
+                }
             } else {
-                newFrames = facingRight ? runRightFrames : runLeftFrames;
-                newAnim   = facingRight ? "run-right"   : "run-left";
+                if (facingRight) {
+                    newFrames = runRightFrames;
+                    newAnim = "run-right";
+                } else {
+                    newFrames = runLeftFrames;
+                    newAnim = "run-left";
+                }
             }
         } else {
             if (shooting) {
-                newFrames = facingRight ? shootIdleRightFrames : shootIdleLeftFrames;
-                newAnim   = facingRight ? "shoot-idle-right"   : "shoot-idle-left";
+                if (facingRight) {
+                    newFrames = shootIdleRightFrames;
+                    newAnim = "shoot-idle-right";
+                } else {
+                    newFrames = shootIdleLeftFrames;
+                    newAnim = "shoot-idle-left";
+                }
             } else {
-                newFrames = facingRight ? idleRightFrames : idleLeftFrames;
-                newAnim   = facingRight ? "idle-right"   : "idle-left";
+                if (facingRight) {
+                    newFrames = idleRightFrames;
+                    newAnim = "idle-right";
+                } else {
+                    newFrames = idleLeftFrames;
+                    newAnim = "idle-left";
+                }
             }
         }
 
@@ -342,20 +373,24 @@ public class Player extends AbstractPlayer {
     protected void drawSelf(Graphics2D g2) {
         BufferedImage frame = getCurrentFrame();
         if (frame != null) {
-            // Sprite sheet already contains separate left/right frames, so just
-            // draw the current frame as-is (no mirroring).
-            g2.drawImage(frame, x - 6, y - 3, width + 12, height + 6, null);
+
+            int dx = x - 6;
+            int dy = y - 3;
+            int dw = width + 12;
+            int dh = height + 6;
+            g2.drawImage(frame, dx, dy, dw, dh, null);
+
+            hitFlash.draw(g2, frame, dx, dy, dw, dh);
         } else {
-            g2.setColor(stunned ? Color.YELLOW : Color.RED);
+            if (stunned) {
+                g2.setColor(Color.YELLOW);
+            } else {
+                g2.setColor(Color.RED);
+            }
             g2.fillRect(x, y, width, height);
         }
     }
 
-    /**
-     * Per-frame hitbox: maps the tight opaque bounding box of the current
-     * sprite frame onto the on-screen draw rectangle. Falls back to the
-     * default x/y/width/height rect if no frame is available.
-     */
     @Override
     public Rectangle2D.Double getBoundingRectangle() {
         BufferedImage frame = getCurrentFrame();
@@ -376,16 +411,15 @@ public class Player extends AbstractPlayer {
             b.height * sy);
     }
 
-    // --- Stun ---
     public void stun(int durationMs) {
         stunned = true;
         stunEndTime = System.currentTimeMillis() + durationMs;
     }
     public boolean isStunned() { return stunned; }
 
-    // --- Damage / death ---
     public void takeDamage(int dmg) {
         health -= dmg;
+        hitFlash.trigger();
         if (health <= 0) {
             die();
         }
@@ -420,17 +454,19 @@ public class Player extends AbstractPlayer {
         if (health > maxHealth) health = maxHealth;
     }
 
-    // --- Item-driven boosts ---
     @Override public void boostDamage(int amount) { damageBonus += amount; }
     @Override public void boostJump(int amount)   { jumpStrength -= Math.abs(amount); }
     @Override public void boostSpeed(int amount)  { speed += amount; }
     @Override public void setGunType(GunType gunType) {
-        this.gunType = gunType == null ? GunType.NORMAL : gunType;
+        if (gunType == null) {
+            this.gunType = GunType.NORMAL;
+        } else {
+            this.gunType = gunType;
+        }
         this.chargeStartTime = -1;
     }
     public GunType getGunType() { return gunType; }
 
-    // --- Input setters ---
     public void setMoveLeft(boolean b)    { moveLeft = b; }
     public void setMoveRight(boolean b)   { moveRight = b; }
     public void setJumpPressed(boolean b) { jumpPressed = b; }
@@ -441,7 +477,6 @@ public class Player extends AbstractPlayer {
         shootPressed = b;
     }
 
-    // --- Getters ---
     public boolean isOnGround()   { return onGround; }
     @Override public List<Projectile> getProjectiles() { return projectiles; }
     public void setLevel(Level level) { this.level = level; }

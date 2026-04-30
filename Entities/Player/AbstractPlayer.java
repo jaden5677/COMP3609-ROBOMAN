@@ -2,10 +2,6 @@ package Entities.Player;
 
 import Entities.AbstractEntity;
 
-/**
- * Common base for every player class. Mirrors {@link Entities.Enemies.AbstractEnemy}
- * so {@link Player} no longer has to inherit from the enemy hierarchy.
- */
 public abstract class AbstractPlayer extends AbstractEntity implements PlayerInterface {
 
     protected int health;

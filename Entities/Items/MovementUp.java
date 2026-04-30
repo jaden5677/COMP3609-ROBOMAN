@@ -1,17 +1,11 @@
 package Entities.Items;
 
 import java.awt.Color;
+import java.awt.image.BufferedImage;
 
 import Entities.Player.PlayerInterface;
+import ImageManager.SpriteSheetExtractor;
 
-/**
- * Improves the player's mobility. Comes in two flavours:
- *  - JUMP   : raises jump strength
- *  - SPEED  : raises horizontal speed
- *
- * Both flavours share this single class so they can be stored together
- * in any {@code Collection&lt;ItemInterface&gt;}.
- */
 public class MovementUp extends AbstractItem {
 
     public enum BoostType { JUMP, SPEED }
@@ -19,17 +13,35 @@ public class MovementUp extends AbstractItem {
     public final BoostType boostType;
     public final int amount;
 
+    private static BufferedImage jumpSprite;
+    private static BufferedImage speedSprite;
+    private static void ensureSprites() {
+        if (jumpSprite != null && speedSprite != null) return;
+        SpriteSheetExtractor ext = SpriteSheetExtractor.getInstance();
+        BufferedImage sheet = ext.loadSpriteSheet("TileSets/fruit.png");
+        if (sheet == null) return;
+        jumpSprite  = ext.extractSprite(sheet, 0 * 16, 0 * 16, 16, 16);
+        speedSprite = ext.extractSprite(sheet, 0 * 16, 2 * 16, 16, 16);
+    }
+
     public MovementUp(int x, int y, String imagePath, BoostType boostType, int amount) {
         super(x, y, imagePath, ItemType.MovementUp);
         this.boostType = boostType;
         this.amount = amount;
+        ensureSprites();
+        if (boostType == BoostType.JUMP) {
+            this.sprite = jumpSprite;
+        } else {
+            this.sprite = speedSprite;
+        }
     }
 
     @Override
     protected Color placeholderColor() {
-        return boostType == BoostType.JUMP
-            ? new Color( 80, 200, 255)   // light blue for jump
-            : new Color(120, 255, 120);  // light green for speed
+        if (boostType == BoostType.JUMP) {
+            return new Color(80, 200, 255);
+        }
+        return new Color(120, 255, 120);
     }
 
     @Override

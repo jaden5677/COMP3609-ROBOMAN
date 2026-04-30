@@ -1,5 +1,7 @@
 package Factory;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 import Entities.Items.AbstractItem;
@@ -8,13 +10,10 @@ import Entities.Items.DamageUp;
 import Entities.Items.GunType;
 import Entities.Items.HealthPacks;
 import Entities.Items.HealthPacks.HealthPackType;
+import Entities.Items.Key;
 import Entities.Items.MovementUp;
+import MainGame.Level;
 
-/**
- * Builds items from an {@link ItemType} key. Defaults to a sensible
- * mid-tier variant for each category; callers wanting a specific
- * variant can use the dedicated helpers.
- */
 public class ItemFactory extends AbstractFactory<AbstractItem, ItemType> {
 
     private static final Random RNG = new Random();
@@ -29,6 +28,9 @@ public class ItemFactory extends AbstractFactory<AbstractItem, ItemType> {
             case DamageUp:   return createDamageUp(x, y, DamageUp.Tier.MEDIUM);
             case MovementUp: return createMovementUp(x, y, MovementUp.BoostType.SPEED, 2);
             case GunType:    return createGunType(x, y, GunType.Variant.TRIPLE_SHOT);
+            case Key:
+                throw new IllegalArgumentException(
+                    "Key needs a Level reference; use createKey(x, y, level)");
             default:
                 throw new IllegalArgumentException("Unknown item type: " + itemType);
         }
@@ -36,21 +38,22 @@ public class ItemFactory extends AbstractFactory<AbstractItem, ItemType> {
 
     @Override
     public AbstractItem createRandom(int x, int y) {
-        ItemType[] types = ItemType.values();
-        return create(types[RNG.nextInt(types.length)], x, y);
+
+        ItemType[] simple = { ItemType.HealthPack, ItemType.DamageUp,
+                              ItemType.MovementUp, ItemType.GunType };
+        return create(simple[RNG.nextInt(simple.length)], x, y);
     }
 
     @Override
     public AbstractItem[] createAll(int x, int y) {
-        ItemType[] types = ItemType.values();
-        AbstractItem[] all = new AbstractItem[types.length];
-        for (int i = 0; i < types.length; i++) {
-            all[i] = create(types[i], x + i * 40, y);
+        ItemType[] all = ItemType.values();
+        List<AbstractItem> built = new ArrayList<>();
+        for (int i = 0; i < all.length; i++) {
+            if (all[i] == ItemType.Key) continue;
+            built.add(create(all[i], x + i * 40, y));
         }
-        return all;
+        return built.toArray(new AbstractItem[0]);
     }
-
-    // ---------------- Variant-specific helpers ----------------
 
     public HealthPacks createHealthPack(int x, int y, HealthPackType type) {
         return new HealthPacks(x, y, null, type);
@@ -66,5 +69,9 @@ public class ItemFactory extends AbstractFactory<AbstractItem, ItemType> {
 
     public GunType createGunType(int x, int y, GunType.Variant variant) {
         return new GunType(x, y, null, variant);
+    }
+
+    public Key createKey(int x, int y, Level level) {
+        return new Key(x, y, null, level);
     }
 }

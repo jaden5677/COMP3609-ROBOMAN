@@ -1,6 +1,7 @@
 package Entities.Enemies;
 
 import java.awt.Color;
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 
 import Entities.Player.Player;
@@ -8,11 +9,6 @@ import Entities.Projectiles.Projectile;
 import ImageManager.SpriteSheetExtractor;
 import MainGame.Level;
 
-/**
- * MetalChomp - Aggressive chaser enemy that moves only along the x-axis.
- * Hard outer shell: immune to light attacks; heavy attacks do half damage
- * when in defense mode. Short-range bite attack. Worth 400 points.
- */
 public class MetalChomp extends Enemy {
 
     private static final int POINTS = 400;
@@ -26,12 +22,11 @@ public class MetalChomp extends Enemy {
     private boolean defenseMode;
     private int attackCooldown;
 
-    // Animation
     private BufferedImage defendRight, floatRight, biteStartRight, biteEndRight;
     private BufferedImage defendLeft, floatLeft, biteStartLeft, biteEndLeft;
     private boolean biting;
     private int biteTick;
-    private static final int BITE_ANIM_TICKS = 8; // ticks per bite frame
+    private static final int BITE_ANIM_TICKS = 8;
 
     public MetalChomp(int x, int y, Player player, Level level) {
         super(x, y, 126, 126, HEALTH, POINTS, player, level);
@@ -52,17 +47,17 @@ public class MetalChomp extends Enemy {
             if (sheet != null) {
                 int fw = 32;
                 int fh = 32;
-                // Row 0: facing right
+
                 defendRight   = ext.extractSprite(sheet, 0 * fw, 0, fw, fh);
                 floatRight    = ext.extractSprite(sheet, 1 * fw, 0, fw, fh);
                 biteEndRight  = ext.extractSprite(sheet, 2 * fw, 0, fw, fh);
                 biteStartRight = ext.extractSprite(sheet, 3 * fw, 0, fw, fh);
-                // Row 1: facing left
+
                 defendLeft    = ext.extractSprite(sheet, 0 * fw, fh, fw, fh);
                 floatLeft     = ext.extractSprite(sheet, 1 * fw, fh, fw, fh);
                 biteEndLeft   = ext.extractSprite(sheet, 2 * fw, fh, fw, fh);
                 biteStartLeft = ext.extractSprite(sheet, 3 * fw, fh, fw, fh);
-                // Default: defend right
+
                 animFrames = new BufferedImage[]{ defendRight };
             }
         } catch (Exception e) {
@@ -73,12 +68,12 @@ public class MetalChomp extends Enemy {
     @Override
     public void takeDamage(int dmg, Projectile.Type attackType) {
         if (!alive) return;
-        // Immune to light attacks
+
         if (attackType == Projectile.Type.PLAYER_LIGHT) {
             super.takeDamage(dmg/2, attackType);
             return;
         }
-        // Heavy attacks do half damage while in defense mode
+
         if (attackType == Projectile.Type.PLAYER_HEAVY && defenseMode) {
             super.takeDamage(dmg, attackType);
             return;
@@ -97,57 +92,109 @@ public class MetalChomp extends Enemy {
 
         if (attackCooldown > 0) attackCooldown--;
 
-        // Handle bite animation
         if (biting) {
             biteTick++;
             if (biteTick < BITE_ANIM_TICKS) {
-                // First frame: bite start
-                animFrames = new BufferedImage[]{ facingRight ? biteStartRight : biteStartLeft };
+
+                if (facingRight) {
+                    animFrames = new BufferedImage[]{ biteStartRight };
+                } else {
+                    animFrames = new BufferedImage[]{ biteStartLeft };
+                }
             } else if (biteTick < BITE_ANIM_TICKS * 2) {
-                // Second frame: bite end
-                animFrames = new BufferedImage[]{ facingRight ? biteEndRight : biteEndLeft };
+
+                if (facingRight) {
+                    animFrames = new BufferedImage[]{ biteEndRight };
+                } else {
+                    animFrames = new BufferedImage[]{ biteEndLeft };
+                }
             } else {
-                // Bite over — revert to defend
+
                 biting = false;
                 biteTick = 0;
-                animFrames = new BufferedImage[]{ facingRight ? defendRight : defendLeft };
+                if (facingRight) {
+                    animFrames = new BufferedImage[]{ defendRight };
+                } else {
+                    animFrames = new BufferedImage[]{ defendLeft };
+                }
             }
             return;
         }
 
         if (dist <= ATTACK_RANGE) {
-            // Short-range bite
+
             defenseMode = false;
             if (attackCooldown <= 0) {
                 player.takeDamage(ATTACK_DAMAGE);
                 attackCooldown = ATTACK_COOLDOWN_TICKS;
                 biting = true;
                 biteTick = 0;
-                animFrames = new BufferedImage[]{ facingRight ? biteStartRight : biteStartLeft };
+                if (facingRight) {
+                    animFrames = new BufferedImage[]{ biteStartRight };
+                } else {
+                    animFrames = new BufferedImage[]{ biteStartLeft };
+                }
             } else {
-                animFrames = new BufferedImage[]{ facingRight ? defendRight : defendLeft };
+                if (facingRight) {
+                    animFrames = new BufferedImage[]{ defendRight };
+                } else {
+                    animFrames = new BufferedImage[]{ defendLeft };
+                }
             }
         } else if (dist <= DETECT_RANGE) {
-            // Chase on x-axis only — show float sprite
+
             defenseMode = true;
-            int dir = player.getX() > x ? 1 : -1;
+            int dir;
+            if (player.getX() > x) {
+                dir = 1;
+            } else {
+                dir = -1;
+            }
             int newX = x + dir * CHASE_SPEED;
+            int probeX;
+            if (dir > 0) {
+                probeX = newX + width;
+            } else {
+                probeX = newX;
+            }
             boolean floorAhead = level.isSolid(
-                newX + (dir > 0 ? width : 0), y + height + 1);
+                probeX, y + height + 1);
             boolean wallAhead = level.isSolid(
-                newX + (dir > 0 ? width : 0), y) ||
+                probeX, y) ||
                 level.isSolid(
-                    newX + (dir > 0 ? width : 0), y + height - 1);
+                    probeX, y + height - 1);
             if (floorAhead && !wallAhead) {
                 x = newX;
             }
-            animFrames = new BufferedImage[]{ facingRight ? floatRight : floatLeft };
+            if (facingRight) {
+                animFrames = new BufferedImage[]{ floatRight };
+            } else {
+                animFrames = new BufferedImage[]{ floatLeft };
+            }
         } else {
-            // Idle — defend
+
             defenseMode = true;
-            animFrames = new BufferedImage[]{ facingRight ? defendRight : defendLeft };
+            if (facingRight) {
+                animFrames = new BufferedImage[]{ defendRight };
+            } else {
+                animFrames = new BufferedImage[]{ defendLeft };
+            }
         }
 
         animate();
+    }
+
+    @Override
+    protected void drawSelf(Graphics2D g) {
+        BufferedImage frame = getCurrentFrame();
+        if (frame == null) { super.drawSelf(g); return; }
+        int fw = frame.getWidth();
+        int fh = frame.getHeight();
+        double scale = Math.min((double) width / fw, (double) height / fh);
+        int drawW = (int)(fw * scale);
+        int drawH = (int)(fh * scale);
+        int offsetX = (width - drawW) / 2;
+        int offsetY = height - drawH;
+        g.drawImage(frame, x + offsetX, y + offsetY, drawW, drawH, null);
     }
 }

@@ -2,10 +2,6 @@ package Factory;
 
 import Entities.EntityInterface;
 
-/**
- * Optional convenience base for factories. Subclasses only have to
- * override the methods relevant to their domain.
- */
 public abstract class AbstractFactory<T extends EntityInterface, K>
         implements FactoryInterface<T, K> {
 
